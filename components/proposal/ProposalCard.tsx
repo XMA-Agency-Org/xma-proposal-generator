@@ -43,6 +43,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
   const [isArchiving, setIsArchiving] = useState(false);
   const [isRenewing, setIsRenewing] = useState(false);
   const [renewError, setRenewError] = useState<string | null>(null);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
 
   const token = proposal.links && proposal.links[0]?.token;
   const viewCount = (proposal.links && proposal.links[0]?.views_count) || 0;
@@ -303,16 +304,12 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
           }
           align="right"
         >
-          <DropdownItem className="flex items-center gap-2">
-            <InvoiceGeneratorDialog
-              proposal={proposal}
-              trigger={
-                <button className="transition-colors flex items-center gap-1">
-                  <FileText size={14} />
-                  Create Invoice
-                </button>
-              }
-            />
+          <DropdownItem 
+            className="flex items-center gap-2"
+            onClick={() => setShowInvoiceDialog(true)}
+          >
+            <FileText size={14} />
+            Create Invoice
           </DropdownItem>
 
           {/* Edit Option */}
@@ -434,6 +431,16 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
         onCancel={() => setShowDeleteConfirm(false)}
         icon={<Trash2 size={24} />}
       />
+
+      {/* Invoice Generator Dialog - Outside of dropdown */}
+      {showInvoiceDialog && (
+        <InvoiceGeneratorDialog
+          proposal={proposal}
+          trigger={null}
+          open={showInvoiceDialog}
+          onOpenChange={setShowInvoiceDialog}
+        />
+      )}
     </Card>
   );
 };
