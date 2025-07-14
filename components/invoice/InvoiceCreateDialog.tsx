@@ -36,39 +36,71 @@ interface InvoiceCreateDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  mode?: "create" | "edit";
+  invoice?: any; // Existing invoice data for edit mode
 }
 
 export default function InvoiceCreateDialog({
   open,
   onClose,
   onSuccess,
+  mode = "create",
+  invoice,
 }: InvoiceCreateDialogProps) {
   const [loading, setLoading] = useState(false);
-  const [issueDate, setIssueDate] = useState<Date>(new Date());
-  const [dueDate, setDueDate] = useState<Date>(addDays(new Date(), 30));
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurringInterval, setRecurringInterval] = useState("monthly");
+  const [issueDate, setIssueDate] = useState<Date>(
+    invoice?.issue_date ? new Date(invoice.issue_date) : new Date()
+  );
+  const [dueDate, setDueDate] = useState<Date>(
+    invoice?.due_date ? new Date(invoice.due_date) : addDays(new Date(), 30)
+  );
+  const [isRecurring, setIsRecurring] = useState(invoice?.is_recurring || false);
+  const [recurringInterval, setRecurringInterval] = useState(invoice?.recurring_interval || "monthly");
   const [clientData, setClientData] = useState({
-    client_name: "",
-    client_company: "",
-    client_address: "",
-    client_trn: "",
+    client_name: invoice?.client_name || "",
+    client_company: invoice?.client_company || "",
+    client_address: invoice?.client_address || "",
+    client_trn: invoice?.client_trn || "",
   });
-  const [notes, setNotes] = useState("");
-  const [lineItems, setLineItems] = useState<LineItem[]>([
-    { description: "", quantity: 1, unit_price: 0, total: 0 },
-  ]);
+  const [notes, setNotes] = useState(invoice?.notes || "");
+  const [discountType, setDiscountType] = useState<"percentage" | "absolute" | null>(
+    invoice?.discount_type || null
+  );
+  const [discountValue, setDiscountValue] = useState(invoice?.discount_value || 0);
+  const [lineItems, setLineItems] = useState<LineItem[]>(
+    invoice?.line_items?.map((item: any) => ({
+      description: item.description,
+      quantity: item.quantity,
+      unit_price: item.unit_price || item.unitPrice || 0,
+      total: item.total || item.lineTotal || 0,
+    })) || [
+      { description: "", quantity: 1, unit_price: 0, total: 0 },
+    ]
+  );
 
   const calculateSubtotal = () => {
     return lineItems.reduce((sum, item) => sum + item.total, 0);
   };
 
+  const calculateDiscount = () => {
+    if (!discountType || discountValue <= 0) return 0;
+    const subtotal = calculateSubtotal();
+    return discountType === "percentage" 
+      ? subtotal * (discountValue / 100)
+      : discountValue;
+  };
+
   const calculateVAT = () => {
-    return calculateSubtotal() * 0.05;
+    const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
+    return (subtotal - discount) * 0.05;
   };
 
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateVAT();
+    const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
+    const vat = calculateVAT();
+    return subtotal - discount + vat;
   };
 
   const handleLineItemChange = (index: number, field: keyof LineItem, value: string | number) => {
@@ -116,6 +148,9 @@ export default function InvoiceCreateDialog({
         due_date: format(dueDate, "yyyy-MM-dd"),
         line_items: validLineItems,
         subtotal: calculateSubtotal(),
+        discount_type: discountType,
+        discount_value: discountValue,
+        discount_amount: calculateDiscount(),
         vat_amount: calculateVAT(),
         total_amount: calculateTotal(),
         is_recurring: isRecurring,
@@ -123,19 +158,27 @@ export default function InvoiceCreateDialog({
         recurring_start_date: isRecurring ? format(issueDate, "yyyy-MM-dd") : null,
       };
 
-      const response = await fetch("/api/invoices", {
-        method: "POST",
+      const url = mode === "create" ? "/api/invoices" : `/api/invoices/${invoice.id}`;
+      const method = mode === "create" ? "POST" : "PATCH";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(invoiceData),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to create invoice");
+        throw new Error(error.error || `Failed to ${mode} invoice`);
       }
 
       const data = await response.json();
-      toast.success(`Invoice ${data.invoice_number} created successfully`);
+      
+      if (mode === "create") {
+        toast.success(`Invoice ${data.invoice.invoice_number} created successfully`);
+      } else {
+        toast.success("Invoice updated successfully");
+      }
       onSuccess();
     } catch (error) {
       console.error("Error creating invoice:", error);
@@ -149,15 +192,49 @@ export default function InvoiceCreateDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Invoice</DialogTitle>
+          <DialogTitle>{mode === "create" ? "Create New Invoice" : `Edit Invoice #${invoice?.invoice_number}`}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Client Information */}
-          <ClientSelector 
-            value={clientData}
-            onChange={setClientData}
-          />
+          {mode === "create" ? (
+            <ClientSelector 
+              value={clientData}
+              onChange={setClientData}
+            />
+          ) : (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Client Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Client Name</Label>
+                  <Input value={clientData.client_name} disabled className="bg-zinc-700" />
+                </div>
+                <div>
+                  <Label>Company Name</Label>
+                  <Input value={clientData.client_company} disabled className="bg-zinc-700" />
+                </div>
+                <div>
+                  <Label>Client TRN</Label>
+                  <Input
+                    value={clientData.client_trn}
+                    onChange={(e) => setClientData({...clientData, client_trn: e.target.value})}
+                    placeholder="Enter TRN"
+                  />
+                </div>
+                <div>
+                  <Label>Client Address</Label>
+                  <Textarea
+                    value={clientData.client_address}
+                    onChange={(e) => setClientData({...clientData, client_address: e.target.value})}
+                    placeholder="Enter address"
+                    rows={2}
+                    className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-400"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Invoice Details */}
           <div className="space-y-4">
@@ -243,12 +320,56 @@ export default function InvoiceCreateDialog({
             </div>
           </div>
 
+          {/* Discount Section */}
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-lg font-semibold">Discount</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Discount Type</Label>
+                <Select 
+                  value={discountType || "none"} 
+                  onValueChange={(value) => setDiscountType(value === "none" ? null : value as any)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Discount</SelectItem>
+                    <SelectItem value="percentage">Percentage</SelectItem>
+                    <SelectItem value="absolute">Fixed Amount</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {discountType && (
+                <div>
+                  <Label>
+                    Discount Value {discountType === "percentage" ? "(%)" : "(AED)"}
+                  </Label>
+                  <Input
+                    type="number"
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(Number(e.target.value))}
+                    min="0"
+                    step={discountType === "percentage" ? "1" : "0.01"}
+                    className="bg-zinc-950 border-zinc-800 text-white"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Totals */}
           <div className="border-t pt-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span>Subtotal</span>
               <span>AED {calculateSubtotal().toFixed(2)}</span>
             </div>
+            {discountType && discountValue > 0 && (
+              <div className="flex justify-between text-sm">
+                <span>Discount</span>
+                <span>-AED {calculateDiscount().toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm">
               <span>VAT (5%)</span>
               <span>AED {calculateVAT().toFixed(2)}</span>
@@ -259,32 +380,34 @@ export default function InvoiceCreateDialog({
             </div>
           </div>
 
-          {/* Recurring Options */}
-          <div className="space-y-4 border-t pt-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="recurring"
-                checked={isRecurring}
-                onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
-              />
-              <Label htmlFor="recurring">Make this a recurring invoice</Label>
-            </div>
-            {isRecurring && (
-              <div>
-                <Label>Recurring Interval</Label>
-                <Select value={recurringInterval} onValueChange={setRecurringInterval}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="annually">Annually</SelectItem>
-                  </SelectContent>
-                </Select>
+          {/* Recurring Options - only show for create mode */}
+          {mode === "create" && (
+            <div className="space-y-4 border-t pt-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="recurring"
+                  checked={isRecurring}
+                  onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+                />
+                <Label htmlFor="recurring">Make this a recurring invoice</Label>
               </div>
-            )}
-          </div>
+              {isRecurring && (
+                <div>
+                  <Label>Recurring Interval</Label>
+                  <Select value={recurringInterval} onValueChange={setRecurringInterval}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="annually">Annually</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Notes */}
           <div>
@@ -305,7 +428,10 @@ export default function InvoiceCreateDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Invoice"}
+              {loading 
+                ? (mode === "create" ? "Creating..." : "Saving...") 
+                : (mode === "create" ? "Create Invoice" : "Save Changes")
+              }
             </Button>
           </div>
         </form>

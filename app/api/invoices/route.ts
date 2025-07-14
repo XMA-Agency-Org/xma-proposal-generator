@@ -8,7 +8,7 @@ import { requireAdmin } from "@/lib/api-auth";
 const COMPANY_INFO = {
   name: "XLUXIVE DIGITAL MARKETING LLC",
   address: "Office: M-44, THE CURVE BUILDING-AL Qouz, Al Qouz Third, Dubai, United Arab Emirates",
-  phone: "+971 4 123 4567",
+  phone: "+971 50 810 7712",
   trn: "104853792000003",
   bankAccountHolder: "XLUXIVE DIGITAL MARKETING LLC",
   iban: "AE590860000009339072484",

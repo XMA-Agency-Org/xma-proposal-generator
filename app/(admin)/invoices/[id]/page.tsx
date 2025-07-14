@@ -48,6 +48,36 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
     redirect("/proposals");
   }
 
+  // Recalculate totals to ensure display accuracy
+  const recalculateDisplayTotals = () => {
+    const lineItemsTotal = (invoice.line_items as any[]).reduce((sum, item) => {
+      const total = item.total || item.lineTotal || (item.quantity * (item.unit_price || item.unitPrice)) || 0;
+      return sum + total;
+    }, 0);
+
+    let discountAmount = 0;
+    if (invoice.discount_type && invoice.discount_value && invoice.discount_value > 0) {
+      if (invoice.discount_type === 'percentage') {
+        discountAmount = lineItemsTotal * (invoice.discount_value / 100);
+      } else {
+        discountAmount = invoice.discount_value;
+      }
+    }
+
+    const discountedSubtotal = lineItemsTotal - discountAmount;
+    const vatAmount = discountedSubtotal * 0.05;
+    const totalAmount = discountedSubtotal + vatAmount;
+
+    return {
+      subtotal: lineItemsTotal,
+      discountAmount,
+      vatAmount,
+      totalAmount
+    };
+  };
+
+  const displayTotals = recalculateDisplayTotals();
+
   const invoiceData: InvoiceData = {
     invoiceNumber: invoice.invoice_number,
     proposalId: invoice.proposal_id || undefined,
@@ -68,9 +98,12 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
     iban: invoice.iban,
     swiftCode: invoice.swift_code,
     bankAddress: invoice.bank_address,
-    subtotal: invoice.subtotal,
-    vatAmount: invoice.vat_amount,
-    totalAmount: invoice.total_amount,
+    subtotal: displayTotals.subtotal,
+    discountType: invoice.discount_type || undefined,
+    discountValue: invoice.discount_value || undefined,
+    discountAmount: displayTotals.discountAmount,
+    vatAmount: displayTotals.vatAmount,
+    totalAmount: displayTotals.totalAmount,
     status: invoice.status as any,
   };
 
@@ -184,15 +217,23 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
           <div className="w-64">
             <div className="flex justify-between mb-2">
               <span className="text-white">Subtotal:</span>
-              <span className="text-white">{formatCurrency(invoice.subtotal)}</span>
+              <span className="text-white">{formatCurrency(displayTotals.subtotal)}</span>
             </div>
+            {invoice.discount_type && displayTotals.discountAmount > 0 && (
+              <div className="flex justify-between mb-2">
+                <span className="text-white">
+                  Discount {invoice.discount_type === 'percentage' ? `(${invoice.discount_value}%)` : ''}:
+                </span>
+                <span className="text-white">-{formatCurrency(displayTotals.discountAmount)}</span>
+              </div>
+            )}
             <div className="flex justify-between mb-2">
               <span className="text-white">VAT (5%):</span>
-              <span className="text-white">{formatCurrency(invoice.vat_amount)}</span>
+              <span className="text-white">{formatCurrency(displayTotals.vatAmount)}</span>
             </div>
             <div className="flex justify-between font-semibold text-lg border-t border-zinc-600 pt-2">
               <span className="text-white">Total:</span>
-              <span className="text-red-400">{formatCurrency(invoice.total_amount)}</span>
+              <span className="text-red-400">{formatCurrency(displayTotals.totalAmount)}</span>
             </div>
           </div>
         </div>

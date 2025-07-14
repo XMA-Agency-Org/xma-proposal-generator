@@ -80,21 +80,47 @@ export async function PATCH(
     if (body.client_address !== undefined) updateData.client_address = body.client_address;
     if (body.clientAddress !== undefined) updateData.client_address = body.clientAddress; // Support both formats
     if (body.notes !== undefined) updateData.notes = body.notes;
+    if (body.discount_type !== undefined) updateData.discount_type = body.discount_type;
+    if (body.discount_value !== undefined) updateData.discount_value = body.discount_value;
+    if (body.discount_amount !== undefined) updateData.discount_amount = body.discount_amount;
+    
+    // Handle subtotal, vat_amount, and total_amount if provided directly
+    if (body.subtotal !== undefined) updateData.subtotal = body.subtotal;
+    if (body.vat_amount !== undefined) updateData.vat_amount = body.vat_amount;
+    if (body.total_amount !== undefined) updateData.total_amount = body.total_amount;
     
     if (body.line_items !== undefined || body.lineItems !== undefined) {
       const lineItems = body.line_items || body.lineItems;
       updateData.line_items = lineItems;
-      // Recalculate totals if line items changed
-      const subtotal = lineItems.reduce((sum: number, item: any) => {
-        const total = item.total || item.lineTotal || (item.quantity * item.unit_price) || 0;
-        return sum + total;
-      }, 0);
-      const vatAmount = subtotal * 0.05;
-      const totalAmount = subtotal + vatAmount;
       
-      updateData.subtotal = subtotal;
-      updateData.vat_amount = vatAmount;
-      updateData.total_amount = totalAmount;
+      // Only recalculate if totals weren't provided directly
+      if (body.subtotal === undefined || body.vat_amount === undefined || body.total_amount === undefined) {
+        const subtotal = lineItems.reduce((sum: number, item: any) => {
+          const total = item.total || item.lineTotal || (item.quantity * item.unit_price) || 0;
+          return sum + total;
+        }, 0);
+        
+        // Calculate discount amount
+        const discountType = body.discount_type || updateData.discount_type;
+        const discountValue = body.discount_value || updateData.discount_value || 0;
+        let discountAmount = 0;
+        if (discountType && discountValue > 0) {
+          if (discountType === 'percentage') {
+            discountAmount = subtotal * (discountValue / 100);
+          } else {
+            discountAmount = discountValue;
+          }
+        }
+        
+        const discountedSubtotal = subtotal - discountAmount;
+        const vatAmount = discountedSubtotal * 0.05;
+        const totalAmount = discountedSubtotal + vatAmount;
+        
+        updateData.subtotal = subtotal;
+        updateData.discount_amount = discountAmount;
+        updateData.vat_amount = vatAmount;
+        updateData.total_amount = totalAmount;
+      }
     }
     
     // Update invoice

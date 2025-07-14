@@ -4,7 +4,15 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2, Save } from "lucide-react";
 import Link from "next/link";
 import type { InvoiceLineItem } from "@/types/invoice";
@@ -20,6 +28,8 @@ export const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice }) => 
   const [clientTrn, setClientTrn] = useState(invoice.client_trn || "");
   const [clientAddress, setClientAddress] = useState(invoice.client_address || "");
   const [dueDate, setDueDate] = useState(invoice.due_date);
+  const [discountType, setDiscountType] = useState(invoice.discount_type || null);
+  const [discountValue, setDiscountValue] = useState(invoice.discount_value || 0);
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>(
     invoice.line_items?.map((item: any) => ({
       description: item.description,
@@ -68,16 +78,31 @@ export const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice }) => 
 
   const calculateTotals = () => {
     const subtotal = lineItems.reduce((sum, item) => sum + item.lineTotal, 0);
-    const vatAmount = subtotal * 0.05;
-    const total = subtotal + vatAmount;
     
-    return { subtotal, vatAmount, total };
+    // Calculate discount
+    let discountAmount = 0;
+    if (discountType && discountValue > 0) {
+      if (discountType === 'percentage') {
+        discountAmount = subtotal * (discountValue / 100);
+      } else {
+        discountAmount = discountValue;
+      }
+    }
+    
+    const discountedSubtotal = subtotal - discountAmount;
+    const vatAmount = discountedSubtotal * 0.05;
+    const total = discountedSubtotal + vatAmount;
+    
+    return { subtotal, discountAmount, vatAmount, total };
   };
 
+      console.log(clientAddress)
   const handleSubmit = async () => {
     setLoading(true);
     
     try {
+      const { subtotal, discountAmount, vatAmount, total } = calculateTotals();
+      
       const response = await fetch(`/api/invoices/${invoice.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -89,8 +114,14 @@ export const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice }) => 
             unit_price: item.unitPrice,
             total: item.lineTotal,
           })),
-          clientTrn: clientTrn || undefined,
-          clientAddress: clientAddress || undefined,
+          clientTrn: clientTrn,
+          clientAddress: clientAddress,
+          discount_type: discountType,
+          discount_value: discountValue,
+          discount_amount: discountAmount,
+          subtotal,
+          vat_amount: vatAmount,
+          total_amount: total,
         }),
       });
 
@@ -108,7 +139,7 @@ export const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice }) => 
     }
   };
 
-  const { subtotal, vatAmount, total } = calculateTotals();
+  const { subtotal, discountAmount, vatAmount, total } = calculateTotals();
 
   return (
     <div className="max-w-4xl mx-auto min-h-screen text-white p-6">
@@ -253,6 +284,44 @@ export const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice }) => 
           </table>
         </div>
 
+        {/* Discount Section */}
+        <div className="space-y-4 border-t border-zinc-600 pt-4">
+          <h3 className="text-lg font-semibold text-white">Discount</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-zinc-400">Discount Type</Label>
+              <Select 
+                value={discountType || "none"} 
+                onValueChange={(value) => setDiscountType(value === "none" ? null : value as any)}
+              >
+                <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="none" className="text-white hover:bg-zinc-900">No Discount</SelectItem>
+                  <SelectItem value="percentage" className="text-white hover:bg-zinc-900">Percentage</SelectItem>
+                  <SelectItem value="absolute" className="text-white hover:bg-zinc-900">Fixed Amount</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {discountType && (
+              <div>
+                <Label className="text-zinc-400">
+                  Discount Value {discountType === "percentage" ? "(%)" : "(AED)"}
+                </Label>
+                <Input
+                  type="number"
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(Number(e.target.value))}
+                  min="0"
+                  step={discountType === "percentage" ? "1" : "0.01"}
+                  className="bg-zinc-700 border-zinc-600 text-white"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Summary */}
         <div className="border-t border-zinc-600 pt-4">
           <div className="space-y-2 max-w-xs ml-auto">
@@ -260,6 +329,12 @@ export const InvoiceEditForm: React.FC<InvoiceEditFormProps> = ({ invoice }) => 
               <span className="text-white">Subtotal:</span>
               <span className="text-white">AED {subtotal.toFixed(2)}</span>
             </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between">
+                <span className="text-white">Discount:</span>
+                <span className="text-white">-AED {discountAmount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-white">VAT (5%):</span>
               <span className="text-white">AED {vatAmount.toFixed(2)}</span>
