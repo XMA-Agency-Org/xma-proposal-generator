@@ -114,6 +114,7 @@ const PackageCard: React.FC<PackageCardProps> = ({ pkg, isSelected, onSelect }) 
             ? "bg-brand-primary text-brand-primary-foreground font-medium"
             : "bg-surface-interactive text-text-secondary hover:bg-interactive-secondary-hover"
         }`}
+        type="button"
       >
         {isSelected ? "Selected" : "Select Package"}
       </button>
