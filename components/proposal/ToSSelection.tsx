@@ -34,22 +34,20 @@ export default function ToSSelection({
 
   // Fetch ToS templates when component mounts or package changes
   useEffect(() => {
-    if (selectedPackageId) {
-      fetchToSTemplates();
-    }
+    fetchToSTemplates();
   }, [selectedPackageId]);
 
   const fetchToSTemplates = async () => {
     try {
       setLoading(true);
-      // For now, get all templates since we don't have package-ToS mapping implemented yet
+      // Get all active templates (custom proposals show all options)
       const response = await fetch("/api/admin/tos-templates");
       if (!response.ok) throw new Error("Failed to fetch ToS templates");
       
       const data = await response.json();
       setTosTemplates(data.templates.filter((t: ToSTemplate) => t.is_active));
       
-      // Set default selection if none selected
+      // Set default selection if none selected and we have templates
       if (!selectedToS && data.templates.length > 0) {
         setSelectedToS(data.templates[0].id);
       }
