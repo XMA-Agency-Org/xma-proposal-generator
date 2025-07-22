@@ -41,7 +41,7 @@ export default function ToSSelection({
     try {
       setLoading(true);
       // Get all active templates (custom proposals show all options)
-      const response = await fetch("/api/admin/tos-templates");
+      const response = await fetch("/api/tos-templates");
       if (!response.ok) throw new Error("Failed to fetch ToS templates");
       
       const data = await response.json();
