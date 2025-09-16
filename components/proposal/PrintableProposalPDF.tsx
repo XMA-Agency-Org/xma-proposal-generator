@@ -15,7 +15,7 @@ import contractStyle from "@/data/contractStyle";
 const ProposalPDF = ({ proposalData, orderId, status }) => {
   // Check if this is a custom proposal
   const isCustomProposal = proposalData.isCustomProposal || false;
-  
+
   // Current date for signature
   const currentDate = new Date().toLocaleDateString();
 
@@ -327,36 +327,6 @@ const ProposalPDF = ({ proposalData, orderId, status }) => {
             <Text style={contractStyle.subtitle}>
               Prepared exclusively for {isCustomProposal ? proposalData.clientInfo?.companyName : proposalData.companyName}
             </Text>
-
-            {status && (
-              <View
-                style={{
-                  ...contractStyle.statusBadge,
-                  backgroundColor:
-                    status === "accepted"
-                      ? "#ECFDF5"
-                      : status === "paid"
-                        ? "#F5F3FF"
-                        : status === "sent"
-                          ? "#EFF6FF"
-                          : status === "rejected"
-                            ? "#FEF2F2"
-                            : "#F3F4F6",
-                  color:
-                    status === "accepted"
-                      ? "#047857"
-                      : status === "paid"
-                        ? "#7C3AED"
-                        : status === "sent"
-                          ? "#1D4ED8"
-                          : status === "rejected"
-                            ? "#DC2626"
-                            : "#4B5563",
-                }}
-              >
-                <Text>{(status || "DRAFT").toUpperCase()} PROPOSAL</Text>
-              </View>
-            )}
           </View>
         </View>
 

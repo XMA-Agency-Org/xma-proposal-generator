@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import LoginForm from "@/components/auth/LoginForm";
 import { createClient } from "@/utils/supabase/server";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Admin Login - XMA Agency",
@@ -45,10 +46,12 @@ export default async function LoginPage({
     <div className="min-h-screen bg-zinc-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <img
+          <Image
             src="/XMA-White.svg"
             alt="XMA Agency Logo"
             className="h-12 mx-auto mb-6"
+            width={150}
+            height={48}
           />
           <h1 className="text-3xl font-bold text-white mb-2">Admin Login</h1>
           <p className="text-zinc-400">
