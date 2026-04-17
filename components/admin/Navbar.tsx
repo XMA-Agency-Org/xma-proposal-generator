@@ -123,13 +123,13 @@ export default function Navbar({ user, userRole }: NavbarProps) {
               {isProfileOpen && (
                 <div className="origin-top-right overflow-hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-zinc-700 ring-1 ring-black ring-opacity-5">
                   <div>
-                    <Link 
+                    <Link
                       href="/admin/packages"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-zinc-600"
                       >
                       Packages
                     </Link>
-                    <Link 
+                    <Link
                       href="/admin/tos-management"
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-zinc-600"
                       >

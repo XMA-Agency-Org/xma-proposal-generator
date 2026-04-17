@@ -9,13 +9,18 @@ interface PrintButtonProps {
   proposalData: any;
   orderId?: string | null;
   status?: string;
+  isXmaMedia?: boolean;
 }
 
 const PrintButton: React.FC<PrintButtonProps> = ({
   proposalData,
   orderId,
   status,
+  isXmaMedia = false,
 }) => {
+  const btnClass = isXmaMedia
+    ? "bg-[var(--brand-fg)] text-[var(--brand-bg)] hover:opacity-80"
+    : "bg-white text-zinc-900 hover:bg-gray-100";
   const [isClient, setIsClient] = useState(false);
 
   // Check if we're in the browser environment
@@ -27,7 +32,7 @@ const PrintButton: React.FC<PrintButtonProps> = ({
     // Server-side rendering fallback
     return (
       <button
-        className="bg-white text-zinc-900 hover:bg-gray-100 px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 transition-colors shadow-sm"
+        className={`${btnClass} px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 transition-colors shadow-sm`}
         disabled
       >
         <FileDown size={18} />
@@ -64,7 +69,7 @@ const PrintButton: React.FC<PrintButtonProps> = ({
           <button
             type="button"
             disabled={loading}
-            className="bg-white text-zinc-900 hover:bg-gray-100 px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 transition-colors shadow-sm disabled:opacity-70 cursor-pointer"
+            className={`${btnClass} px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 transition-colors shadow-sm disabled:opacity-70 cursor-pointer`}
           >
             {loading ? (
               <>

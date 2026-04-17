@@ -26,12 +26,14 @@ interface AdditionalServicesProps {
     value: number,
     type: "percentage" | "absolute",
   ) => void;
+  isXmaMedia?: boolean;
 }
 
 const AdditionalServices: React.FC<AdditionalServicesProps> = ({
   selectedServices,
   discounts,
   onDiscountChange,
+  isXmaMedia = false,
 }) => {
   const [expandedService, setExpandedService] = useState<
     string | number | null
@@ -46,9 +48,11 @@ const AdditionalServices: React.FC<AdditionalServicesProps> = ({
     return null;
   }
 
+  const cardBg = isXmaMedia ? "bg-[var(--card)]" : "bg-zinc-800";
+
   return (
-    <div className="mb-8 bg-zinc-800 rounded-lg p-6 shadow-lg">
-      <h2 className="text-xl font-bold mb-4 text-red-500">
+    <div className={`mb-8 rounded-lg p-6 shadow-lg ${cardBg}`}>
+      <h2 className={`text-xl font-bold mb-4 ${isXmaMedia ? 'text-[var(--primary)]' : 'text-red-500'}`}>
         Additional Services
       </h2>
       <div className="space-y-4">
@@ -68,7 +72,7 @@ const AdditionalServices: React.FC<AdditionalServicesProps> = ({
           const currency = service.currency || "AED";
 
           return (
-            <div key={service.id} className="bg-zinc-900 p-5 rounded-lg">
+            <div key={service.id} className={`p-5 rounded-lg ${isXmaMedia ? 'bg-[var(--background)]' : 'bg-zinc-900'}`}>
               <div className="flex flex-wrap justify-between items-start">
                 <div className="flex-grow">
                   <div className="flex items-center">

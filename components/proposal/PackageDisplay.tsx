@@ -5,13 +5,17 @@ import {
   parsePrice,
   Discount,
 } from "@/lib/proposalUtils";
+import { HeroMedia } from "@/components/ui/brand/HeroMedia";
+import { CurrencyState } from "@/lib/useCurrencyRates";
 
 interface PackageDisplayProps {
   selectedPackageIndex?: number | null;
-  selectedPackage?: any; // Package snapshot
+  selectedPackage?: any;
   discount: Discount;
   onDiscountChange: (value: number, type: "percentage" | "absolute") => void;
   includePackage?: boolean;
+  isXmaMedia?: boolean;
+  currencyState?: CurrencyState;
 }
 
 const PackageDisplay: React.FC<PackageDisplayProps> = ({
@@ -20,8 +24,23 @@ const PackageDisplay: React.FC<PackageDisplayProps> = ({
   discount,
   onDiscountChange,
   includePackage = true,
+  isXmaMedia = false,
+  currencyState,
 }) => {
   const [showAllPackages, setShowAllPackages] = useState(false);
+
+  const cardBg = isXmaMedia ? "bg-[var(--card)]" : "bg-zinc-800";
+  const innerBg = isXmaMedia ? "bg-[var(--background)]" : "bg-zinc-900";
+  const headingColor = isXmaMedia ? "text-[var(--primary)]" : "text-red-500";
+  const toggleBtnBg = isXmaMedia
+    ? "bg-[var(--muted)] hover:bg-[var(--border)] text-[var(--muted-foreground)]"
+    : "bg-zinc-700 hover:bg-zinc-600 text-zinc-300";
+  const descColor = isXmaMedia ? "text-[var(--muted-foreground)]" : "text-zinc-400";
+  const popularBadge = isXmaMedia
+    ? "bg-[var(--primary)]/20 text-[var(--primary)]"
+    : "bg-red-600/20 text-red-400";
+  const checkColor = isXmaMedia ? "text-[var(--primary)]" : "text-red-500";
+  const emptyText = isXmaMedia ? "text-[var(--muted-foreground)] bg-[var(--muted)]" : "text-center text-zinc-400 py-4 bg-zinc-700/50 rounded";
 
   if (!includePackage || (!selectedPackage && selectedPackageIndex === null)) {
     return null;
@@ -36,49 +55,62 @@ const PackageDisplay: React.FC<PackageDisplayProps> = ({
     const discountedPrice = calculateDiscountedPrice(originalPrice, discount);
 
     return (
-      <div className="mb-8 bg-zinc-800 rounded-lg p-6 shadow-lg">
+      <div className={`mb-8 rounded-lg p-6 shadow-lg ${cardBg}`}>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-red-500">Selected Package</h2>
+          <h2 className={`text-xl font-bold ${headingColor}`}>Selected Package</h2>
           <button
             onClick={() => setShowAllPackages(!showAllPackages)}
-            className="text-sm bg-zinc-700 hover:bg-zinc-600 px-3 py-1 rounded text-zinc-300 transition-colors"
+            className={`text-sm px-3 py-1 rounded transition-colors ${toggleBtnBg}`}
           >
             {showAllPackages ? "Hide Details" : "Show Details"}
           </button>
         </div>
 
-        <div className="bg-zinc-900 p-6 rounded-lg mb-6">
+        {selectedPackage.hero_media_url && selectedPackage.hero_media_type && (
+          <div className="rounded-lg overflow-hidden mb-4 aspect-video">
+            <HeroMedia
+              url={selectedPackage.hero_media_url}
+              type={selectedPackage.hero_media_type}
+              alt={selectedPackage.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        <div className={`${innerBg} p-6 rounded-lg mb-6`}>
           <div className="flex flex-wrap justify-between items-start mb-4">
             <div>
               <h3 className="text-xl font-bold">
                 {selectedPackage.name} Package
               </h3>
               {selectedPackage.is_popular && (
-                <div className="inline-block bg-red-600/20 text-red-400 text-xs font-medium px-2 py-1 rounded mt-1">
+                <div className={`inline-block text-xs font-medium px-2 py-1 rounded mt-1 ${popularBadge}`}>
                   Most Popular
                 </div>
               )}
-              <p className="text-zinc-400 mt-2 max-w-xl">
+              <p className={`mt-2 max-w-xl ${descColor}`}>
                 {selectedPackage.description}
               </p>
             </div>
             <div className="text-right mt-2 md:mt-0">
               {discount.value > 0 && (
                 <div className="text-lg line-through text-zinc-500">
-                  {formatPrice(originalPrice)} {selectedPackage.currency}
+                  {currencyState ? currencyState.convert(originalPrice) : formatPrice(originalPrice)}{" "}
+                  {currencyState?.selected.code ?? selectedPackage.currency}
                 </div>
               )}
               <div className="text-2xl font-bold flex items-center justify-end">
-                {formatPrice(discountedPrice)} {selectedPackage.currency}
+                {currencyState ? currencyState.convert(discountedPrice) : formatPrice(discountedPrice)}{" "}
+                {currencyState?.selected.code ?? selectedPackage.currency}
                 {discount.value > 0 && (
                   <span className="ml-2 text-sm font-normal bg-green-900/30 text-green-400 px-2 py-1 rounded">
                     {discount.type === "percentage"
                       ? `${discount.value}% OFF`
-                      : `-${formatPrice(discount.value)} ${selectedPackage.currency}`}
+                      : `-${currencyState ? currencyState.convert(discount.value) : formatPrice(discount.value)} ${currencyState?.selected.code ?? selectedPackage.currency}`}
                   </span>
                 )}
               </div>
-              {selectedPackage.usd_price && (
+              {selectedPackage.usd_price && (!currencyState || currencyState.selected.code === "AED") && (
                 <div className="text-sm text-zinc-400">
                   ${formatPrice(selectedPackage.usd_price)} USD
                 </div>
@@ -94,7 +126,7 @@ const PackageDisplay: React.FC<PackageDisplayProps> = ({
                     <div key={index} className="flex items-start">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5"
+                        className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${checkColor}`}
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -111,7 +143,7 @@ const PackageDisplay: React.FC<PackageDisplayProps> = ({
                   ))}
                 </div>
               ) : (
-                <div className="text-center text-zinc-400 py-4 bg-zinc-700/50 rounded">
+                <div className={`text-center py-4 rounded ${emptyText}`}>
                   No additional details available for this package.
                 </div>
               )}
@@ -124,10 +156,10 @@ const PackageDisplay: React.FC<PackageDisplayProps> = ({
 
   // If we don't have the package snapshot, show limited info
   return (
-    <div className="mb-8 bg-zinc-800 rounded-lg p-6 shadow-lg">
-      <h2 className="text-xl font-bold mb-4 text-red-500">Selected Package</h2>
-      <div className="bg-zinc-900 p-5 rounded-lg">
-        <div className="text-center text-zinc-400 py-4">
+    <div className={`mb-8 rounded-lg p-6 shadow-lg ${cardBg}`}>
+      <h2 className={`text-xl font-bold mb-4 ${headingColor}`}>Selected Package</h2>
+      <div className={`${innerBg} p-5 rounded-lg`}>
+        <div className={`text-center py-4 ${descColor}`}>
           Package information is not stored in this proposal's format.
         </div>
       </div>

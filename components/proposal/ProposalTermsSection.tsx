@@ -4,22 +4,29 @@ import TermsAndConditions from "./TermsAndConditions";
 
 interface ProposalTermsSectionProps {
   proposalData: any;
+  isXmaMedia?: boolean;
 }
 
-const ProposalTermsSection: React.FC<ProposalTermsSectionProps> = ({ proposalData }) => {
+const ProposalTermsSection: React.FC<ProposalTermsSectionProps> = ({ proposalData, isXmaMedia = false }) => {
   const proposalTerms = getProposalTerms(proposalData);
   const formattedTerms = formatTermsForDisplay(proposalTerms);
-  
+
+  const cardBg = isXmaMedia ? "bg-[var(--card)]" : "bg-zinc-800";
+  const headingColor = isXmaMedia ? "text-[var(--primary)]" : "text-red-500";
+  const innerBg = isXmaMedia ? "bg-[var(--background)]/50" : "bg-zinc-900/50";
+  const textColor = isXmaMedia ? "text-[var(--foreground)]" : "text-zinc-300";
+  const numColor = isXmaMedia ? "text-[var(--primary)]" : "text-red-500";
+
   // If we have terms from the new ToS system, display them
   if (formattedTerms.length > 0) {
     return (
-      <div className="mb-8 bg-zinc-800 rounded-lg p-6 shadow-lg">
-        <h2 className="text-xl font-bold mb-4 text-red-500">Terms & Conditions</h2>
-        <div className="bg-zinc-900/50 p-5 rounded-lg">
-          <ol className="space-y-3 text-zinc-300 text-sm">
+      <div className={`mb-8 rounded-lg p-6 shadow-lg ${cardBg}`}>
+        <h2 className={`text-xl font-bold mb-4 ${headingColor}`}>Terms & Conditions</h2>
+        <div className={`${innerBg} p-5 rounded-lg`}>
+          <ol className={`space-y-3 text-sm ${textColor}`}>
             {formattedTerms.map((term, index) => (
               <li key={index} className="flex items-start">
-                <span className="text-red-500 mr-3 font-semibold">{index + 1}.</span>
+                <span className={`mr-3 font-semibold ${numColor}`}>{index + 1}.</span>
                 <div className="leading-relaxed">
                   {term.title && <span className="font-medium">{term.title}:</span>}
                   {term.title && " "}

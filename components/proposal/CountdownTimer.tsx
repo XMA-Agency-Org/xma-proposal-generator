@@ -110,27 +110,32 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
     );
   }
 
+  const isXmaMedia = className.includes('xma-media');
+  const numColor = isXmaMedia ? 'text-[var(--primary)]' : 'text-white';
+  const labelColor = isXmaMedia ? 'text-[var(--foreground)]/50' : 'text-zinc-400';
+  const sepColor = isXmaMedia ? 'text-[var(--foreground)]/30' : 'text-zinc-500';
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className="flex items-center">
         <div className="text-center">
-          <div className="text-2xl font-bold text-white">{timeLeft.days}</div>
-          <div className="text-xs text-zinc-400 uppercase">Days</div>
+          <div className={`text-2xl font-bold ${numColor}`}>{timeLeft.days}</div>
+          <div className={`text-xs uppercase ${labelColor}`}>Days</div>
         </div>
-        <span className="text-xl text-zinc-500 mx-1">:</span>
+        <span className={`text-xl mx-1 ${sepColor}`}>:</span>
         <div className="text-center">
-          <div className="text-2xl font-bold text-white">{formatUnit(timeLeft.hours)}</div>
-          <div className="text-xs text-zinc-400 uppercase">Hours</div>
+          <div className={`text-2xl font-bold ${numColor}`}>{formatUnit(timeLeft.hours)}</div>
+          <div className={`text-xs uppercase ${labelColor}`}>Hours</div>
         </div>
-        <span className="text-xl text-zinc-500 mx-1">:</span>
+        <span className={`text-xl mx-1 ${sepColor}`}>:</span>
         <div className="text-center">
-          <div className="text-2xl font-bold text-white">{formatUnit(timeLeft.minutes)}</div>
-          <div className="text-xs text-zinc-400 uppercase">Min</div>
+          <div className={`text-2xl font-bold ${numColor}`}>{formatUnit(timeLeft.minutes)}</div>
+          <div className={`text-xs uppercase ${labelColor}`}>Min</div>
         </div>
-        <span className="text-xl text-zinc-500 mx-1">:</span>
+        <span className={`text-xl mx-1 ${sepColor}`}>:</span>
         <div className="text-center">
-          <div className="text-2xl font-bold text-white">{formatUnit(timeLeft.seconds)}</div>
-          <div className="text-xs text-zinc-400 uppercase">Sec</div>
+          <div className={`text-2xl font-bold ${numColor}`}>{formatUnit(timeLeft.seconds)}</div>
+          <div className={`text-xs uppercase ${labelColor}`}>Sec</div>
         </div>
       </div>
     </div>

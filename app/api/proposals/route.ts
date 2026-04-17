@@ -49,29 +49,37 @@ export async function POST(request: Request) {
     // Handle ToS template selection
     let tosTemplateId = null;
     let tosSnapshot = null;
-    
-    if (proposalData.selectedToS && proposalData.selectedToS !== "custom") {
-      // Selected a ToS template
-      tosTemplateId = proposalData.selectedToS;
-      
-      // Fetch the template to store a snapshot
+
+    const resolvedToS = proposalData.selectedToS;
+
+    if (resolvedToS && resolvedToS !== "custom") {
+      tosTemplateId = resolvedToS;
       const { data: tosTemplate } = await supabase
         .from("tos_templates")
         .select("*")
-        .eq("id", proposalData.selectedToS)
+        .eq("id", resolvedToS)
         .single();
-        
-      if (tosTemplate) {
-        tosSnapshot = tosTemplate.terms;
-      }
-    } else if (proposalData.selectedToS === "custom" && proposalData.customTerms && proposalData.customTerms.length > 0) {
-      // Custom terms - convert to ToSTerm format
-      tosSnapshot = proposalData.customTerms.map((term, index) => ({
+      if (tosTemplate) tosSnapshot = tosTemplate.terms;
+    } else if (resolvedToS === "custom" && proposalData.customTerms?.length > 0) {
+      tosSnapshot = proposalData.customTerms.map((term: string, index: number) => ({
         id: index + 1,
         title: "",
         content: term,
-        order: index + 1
+        order: index + 1,
       }));
+    } else {
+      // Auto-attach the default T&C template when nothing is explicitly selected
+      const { data: defaultTemplate } = await supabase
+        .from("tos_templates")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .single();
+      if (defaultTemplate) {
+        tosTemplateId = defaultTemplate.id;
+        tosSnapshot = defaultTemplate.terms;
+      }
     }
 
     // First get or create the client
@@ -127,6 +135,7 @@ export async function POST(request: Request) {
         overall_discount_value: proposalData.overallDiscountValue || 0,
         include_tax: proposalData.includeTax || false,
         validity_days: proposalData.validityDays || 30,
+        currency: proposalData.currency || 'AED',
         proposal_data: proposalData,
         encoded_data: encodedData,
         status: "draft",

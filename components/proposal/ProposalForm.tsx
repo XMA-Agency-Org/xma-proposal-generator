@@ -5,10 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import ClientInformationForm from "./ClientInformationForm";
 import PackageSelection from "./PackageSelection";
-import ServiceSelection from "./ServiceSelection";
 import ToSSelection from "./ToSSelection";
 import GeneratorSummary from "./GeneratorSummary";
 import ProposalSuccess from "./ProposalSuccess";
+import { CURRENCIES, CurrencyOption } from "@/lib/useCurrencyRates";
 
 // Main Component
 function ProposalForm({
@@ -38,22 +38,6 @@ function ProposalForm({
     initialData: initialData?.packages || [],
   });
 
-  const servicesQuery = useQuery({
-    queryKey: ["services"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("services")
-        .select("*")
-        .order("price");
-
-      if (error) {
-        console.error("Error fetching services:", error);
-        throw error;
-      }
-      return data || [];
-    },
-    initialData: initialData?.services || [],
-  });
 
   // State for form inputs
   const [clientName, setClientName] = useState(
@@ -71,8 +55,11 @@ function ProposalForm({
   const [selectedPackageId, setSelectedPackageId] = useState(
     existingProposal?.selectedPackage?.id || null,
   );
-  const [selectedServices, setSelectedServices] = useState(
-    existingProposal?.selectedServices || [],
+  const [selectedBrand, setSelectedBrand] = useState<'xma' | 'xma_media'>(
+    existingProposal?.selectedPackage?.brand ?? 'xma'
+  );
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyOption>(
+    CURRENCIES.find(c => c.code === existingProposal?.currency) ?? CURRENCIES[0]
   );
   const [showProposal, setShowProposal] = useState(false);
   const [proposalLink, setProposalLink] = useState("");
@@ -109,19 +96,30 @@ function ProposalForm({
       packagesQuery.data.length > 0 &&
       !selectedPackageId
     ) {
-      // Try to find the "Standard" package, or use the second one, or the first one
-      const standardPackage = packagesQuery.data.find(
-        (p) => p.name === "Standard",
+      const brandPackages = packagesQuery.data.filter(
+        (p) => (p.brand ?? 'xma') === selectedBrand
       );
+      const standardPackage = brandPackages.find((p) => p.name === "Standard");
       const defaultPackage =
         standardPackage ||
-        (packagesQuery.data.length > 1
-          ? packagesQuery.data[1]
-          : packagesQuery.data[0]);
-
-      setSelectedPackageId(defaultPackage.id);
+        (brandPackages.length > 1 ? brandPackages[1] : brandPackages[0]);
+      if (defaultPackage) setSelectedPackageId(defaultPackage.id);
     }
-  }, [packagesQuery.isSuccess, packagesQuery.data, selectedPackageId]);
+  }, [packagesQuery.isSuccess, packagesQuery.data, selectedPackageId, selectedBrand]);
+
+  // When brand changes, auto-select first package of the new brand
+  useEffect(() => {
+    if (!packagesQuery.data) return;
+    const brandPackages = packagesQuery.data.filter(
+      (p) => (p.brand ?? 'xma') === selectedBrand
+    );
+    const current = brandPackages.find((p) => p.id === selectedPackageId);
+    if (!current && brandPackages.length > 0) {
+      setSelectedPackageId(brandPackages[0].id);
+    } else if (!current) {
+      setSelectedPackageId(null);
+    }
+  }, [selectedBrand]);
 
   // Handle discount changes (universal handler)
   const handleDiscountChange = (
@@ -177,39 +175,14 @@ function ProposalForm({
     }
   };
 
-  // Toggle service selection
-  const toggleService = (service) => {
-    if (selectedServices.some((s) => s.id === service.id)) {
-      setSelectedServices(selectedServices.filter((s) => s.id !== service.id));
-
-      // Remove discount for this service if it exists
-      if (discounts.serviceDiscounts[service.id]) {
-        const updatedDiscounts = { ...discounts };
-        delete updatedDiscounts.serviceDiscounts[service.id];
-        setDiscounts(updatedDiscounts);
-      }
-    } else {
-      setSelectedServices([...selectedServices, service]);
-
-      // Initialize discount for this service
-      setDiscounts((prev) => ({
-        ...prev,
-        serviceDiscounts: {
-          ...prev.serviceDiscounts,
-          [service.id]: { type: "percentage", value: 0 },
-        },
-      }));
-    }
-  };
-
   const generateProposal = async (e) => {
     e.preventDefault();
     setSaveError(null);
     setIsSaving(true);
 
-    // Validate that at least one package or service is selected
-    if (!includePackage && selectedServices.length === 0) {
-      alert("Please select at least one package or service for your proposal.");
+    // Validate that a package is selected
+    if (!includePackage || !selectedPackageId) {
+      alert("Please select a package for your proposal.");
       setIsSaving(false);
       return;
     }
@@ -237,7 +210,7 @@ function ProposalForm({
         additionalInfo,
         includePackage,
         selectedPackageId,
-        selectedServices,
+        selectedServices: [],
         discounts,
         includeTax,
         validityDays,
@@ -271,22 +244,15 @@ function ProposalForm({
         proposalDate,
         additionalInfo,
         includePackage,
-        // Store both the full package object and the index
         selectedPackage: includePackage ? selectedPackage : null,
         selectedPackageIndex: includePackage ? selectedPackageIndex : null,
-        // Store full copies of the selected services, not just their IDs
-        selectedServices: selectedServices.map((service) => ({
-          ...service, // Include all service properties
-          // Include features if the service has them
-          features: service.features ? [...service.features] : undefined,
-        })),
-        // Also store the discount data
+        selectedServices: [],
         discounts,
         includeTax,
         validityDays,
-        // Store ToS data
         selectedToS,
         customTerms,
+        currency: selectedCurrency.code,
       };
 
       // First try to get or create the client
@@ -339,14 +305,15 @@ function ProposalForm({
             overallDiscountValue: discounts.overallDiscount.value,
             includeTax,
             validityDays,
-            selectedServices,
+            selectedServices: [],
             selectedPackage: includePackage ? selectedPackage : null,
             selectedPackageIndex: includePackage ? selectedPackageIndex : null,
             discounts,
             selectedToS,
             customTerms,
+            currency: selectedCurrency.code,
           },
-          encodedData: btoa(JSON.stringify(proposalDataWithSnapshots)),
+          encodedData: btoa(encodeURIComponent(JSON.stringify(proposalDataWithSnapshots))),
         }),
       });
 
@@ -384,7 +351,7 @@ function ProposalForm({
   };
 
   // Loading state
-  if (packagesQuery.isLoading || servicesQuery.isLoading) {
+  if (packagesQuery.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
         <div className="flex flex-col items-center">
@@ -396,8 +363,8 @@ function ProposalForm({
   }
 
   // Error state
-  if (packagesQuery.isError || servicesQuery.isError) {
-    const error = packagesQuery.error || servicesQuery.error;
+  if (packagesQuery.isError) {
+    const error = packagesQuery.error;
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
         <div className="text-center max-w-md">
@@ -431,10 +398,7 @@ function ProposalForm({
   }
 
   // No data state
-  if (
-    (packagesQuery.data.length === 0 || servicesQuery.data.length === 0) &&
-    !showProposal
-  ) {
+  if (packagesQuery.data.length === 0 && !showProposal) {
     return (
       <div className="min-h-screen pt-40 flex items-center justify-center text-white">
         <div className="text-center max-w-md">
@@ -452,19 +416,9 @@ function ProposalForm({
               d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
             />
           </svg>
-          <h2 className="text-xl font-bold text-zinc-300 mb-2">
-            No Data Found
-          </h2>
-          <p className="text-zinc-400 mb-4">
-            {packagesQuery.data.length === 0
-              ? "No packages found in the database."
-              : ""}
-            {servicesQuery.data.length === 0
-              ? "No services found in the database."
-              : ""}
-          </p>
+          <h2 className="text-xl font-bold text-zinc-300 mb-2">No Packages Found</h2>
           <p className="text-zinc-400 mb-6">
-            Please contact your administrator to set up the necessary data.
+            Please contact your administrator to set up the necessary packages.
           </p>
         </div>
       </div>
@@ -502,14 +456,10 @@ function ProposalForm({
               setSelectedPackageId={setSelectedPackageId}
               includePackage={includePackage}
               setIncludePackage={setIncludePackage}
-            />
-
-            {/* Additional Services */}
-            <ServiceSelection
-              services={servicesQuery.data}
-              selectedServices={selectedServices}
-              toggleService={toggleService}
-              includePackage={includePackage}
+              selectedBrand={selectedBrand}
+              setSelectedBrand={setSelectedBrand}
+              selectedCurrency={selectedCurrency}
+              setSelectedCurrency={setSelectedCurrency}
             />
 
             {/* Terms & Conditions Selection */}
@@ -522,11 +472,11 @@ function ProposalForm({
             />
 
             {/* Summary and Discounts Section */}
-            {(includePackage || selectedServices.length > 0) && (
+            {includePackage && selectedPackage && (
               <GeneratorSummary
                 includePackage={includePackage}
                 selectedPackage={selectedPackage}
-                selectedServices={selectedServices}
+                selectedServices={[]}
                 discounts={discounts}
                 includeTax={includeTax}
                 onDiscountChange={handleDiscountChange}
@@ -592,7 +542,7 @@ function ProposalForm({
             proposalDate={proposalDate}
             includePackage={includePackage}
             selectedPackage={selectedPackage}
-            selectedServices={selectedServices}
+            selectedServices={[]}
           />
         )}
       </div>

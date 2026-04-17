@@ -3,6 +3,7 @@
 import React from "react";
 import PackageCard from "./PackageCard";
 import { Card } from "../ui/design-card";
+import { CURRENCIES, CurrencyOption } from "@/lib/useCurrencyRates";
 
 interface Package {
   id: string;
@@ -12,6 +13,7 @@ interface Package {
   usd_price: number;
   is_popular?: boolean;
   description: string;
+  brand?: 'xma' | 'xma_media';
   features: any[];
 }
 
@@ -21,6 +23,10 @@ interface PackageSelectionProps {
   setSelectedPackageId: (id: string) => void;
   includePackage: boolean;
   setIncludePackage: (include: boolean) => void;
+  selectedBrand: 'xma' | 'xma_media';
+  setSelectedBrand: (brand: 'xma' | 'xma_media') => void;
+  selectedCurrency: CurrencyOption;
+  setSelectedCurrency: (c: CurrencyOption) => void;
 }
 
 const PackageSelection: React.FC<PackageSelectionProps> = ({
@@ -29,14 +35,53 @@ const PackageSelection: React.FC<PackageSelectionProps> = ({
   setSelectedPackageId,
   includePackage,
   setIncludePackage,
+  selectedBrand,
+  setSelectedBrand,
+  selectedCurrency,
+  setSelectedCurrency,
 }) => {
+  const filteredPackages = packages.filter(
+    (pkg) => (pkg.brand ?? 'xma') === selectedBrand
+  );
+
   return (
     <Card className="mb-8">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-text-primary">
-          Select Package
-        </h2>
-        <div className="flex items-center">
+        <h2 className="text-xl font-bold text-text-primary">Select Package</h2>
+        <div className="flex items-center gap-4">
+          <div className="inline-flex rounded-md border border-surface-interactive overflow-hidden">
+            {(['xma', 'xma_media'] as const).map((b) => (
+              <button
+                key={b}
+                type="button"
+                onClick={() => setSelectedBrand(b)}
+                className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+                  selectedBrand === b
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-transparent text-text-secondary hover:bg-surface-interactive'
+                }`}
+              >
+                {b === 'xma' ? 'XMA' : 'XMA Media'}
+              </button>
+            ))}
+          </div>
+          <div className="inline-flex rounded-md border border-surface-interactive overflow-hidden">
+            {CURRENCIES.map((c) => (
+              <button
+                key={c.code}
+                type="button"
+                onClick={() => setSelectedCurrency(c)}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  selectedCurrency.code === c.code
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-transparent text-text-secondary hover:bg-surface-interactive'
+                }`}
+              >
+                {c.code}
+              </button>
+            ))}
+          </div>
+
           <label className="flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -51,16 +96,14 @@ const PackageSelection: React.FC<PackageSelectionProps> = ({
                 className={`absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform ${includePackage ? "translate-x-5" : ""}`}
               />
             </div>
-            <span className="ml-2 text-sm text-text-secondary">
-              Include Package
-            </span>
+            <span className="ml-2 text-sm text-text-secondary">Include Package</span>
           </label>
         </div>
       </div>
 
-      {includePackage && (
+      {includePackage && filteredPackages.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {packages.map((pkg) => (
+          {filteredPackages.map((pkg) => (
             <PackageCard
               key={pkg.id}
               pkg={pkg}
@@ -71,12 +114,20 @@ const PackageSelection: React.FC<PackageSelectionProps> = ({
         </div>
       )}
 
-      {!includePackage && (
+      {includePackage && filteredPackages.length === 0 && (
         <div className="bg-surface-secondary p-6 rounded-lg text-center">
           <p className="text-text-muted">
-            Package selection is disabled. You can add additional
-            services below.
+            No {selectedBrand === 'xma_media' ? 'XMA Media' : 'XMA'} packages yet.
+            {selectedBrand === 'xma_media' && (
+              <> Create one in <strong>Admin → Packages</strong>.</>
+            )}
           </p>
+        </div>
+      )}
+
+      {!includePackage && (
+        <div className="bg-surface-secondary p-6 rounded-lg text-center">
+          <p className="text-text-muted">Package selection is disabled.</p>
         </div>
       )}
     </Card>

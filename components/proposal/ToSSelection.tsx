@@ -31,6 +31,7 @@ export default function ToSSelection({
   const [showPreview, setShowPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<ToSTemplate | null>(null);
   const [newTerm, setNewTerm] = useState("");
+  const [useDefault, setUseDefault] = useState(true);
 
   // Fetch ToS templates when component mounts or package changes
   useEffect(() => {
@@ -47,9 +48,13 @@ export default function ToSSelection({
       const data = await response.json();
       setTosTemplates(data.templates.filter((t: ToSTemplate) => t.is_active));
       
-      // Set default selection if none selected and we have templates
-      if (!selectedToS && data.templates.length > 0) {
-        setSelectedToS(data.templates[0].id);
+      // Auto-select the first active template as default
+      if (data.templates.length > 0) {
+        const defaultTemplate = data.templates.find((t: ToSTemplate) => t.is_active) ?? data.templates[0];
+        if (!selectedToS) {
+          setSelectedToS(defaultTemplate.id);
+          setSelectedTemplate(defaultTemplate);
+        }
       }
     } catch (error) {
       console.error("Error fetching ToS templates:", error);
@@ -110,6 +115,25 @@ export default function ToSSelection({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={useDefault}
+            onChange={(e) => {
+              setUseDefault(e.target.checked);
+              if (e.target.checked && tosTemplates.length > 0) {
+                const def = tosTemplates.find((t) => t.is_active) ?? tosTemplates[0];
+                setSelectedToS(def.id);
+                setSelectedTemplate(def);
+              }
+            }}
+            className="h-4 w-4 accent-red-600"
+          />
+          <span className="text-sm text-text-secondary">Use default T&amp;C (recommended)</span>
+        </label>
+
+        {!useDefault && (
+        <>
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary"></div>
@@ -240,6 +264,8 @@ export default function ToSSelection({
               </div>
             )}
           </>
+        )}
+        </>
         )}
       </CardContent>
     </Card>

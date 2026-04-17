@@ -7,6 +7,7 @@ import {
 } from "@/lib/proposalUtils";
 import { packages } from "@/data/proposalData";
 import CompanyStamp from "./CompanyStamp";
+import { CurrencyState } from "@/lib/useCurrencyRates";
 
 interface SummarySectionProps {
   proposalData: any;
@@ -24,6 +25,8 @@ interface SummarySectionProps {
     discountType: "percentage" | "absolute",
   ) => void;
   includeTax?: boolean;
+  isXmaMedia?: boolean;
+  currencyState?: CurrencyState;
 }
 
 const SummarySection: React.FC<SummarySectionProps> = ({
@@ -32,7 +35,21 @@ const SummarySection: React.FC<SummarySectionProps> = ({
   orderId,
   status = "draft",
   includeTax = true,
+  isXmaMedia = false,
+  currencyState,
 }) => {
+  const wrapperBg = isXmaMedia
+    ? "bg-[var(--card)] border border-[var(--border)]"
+    : "bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-700";
+  const headingColor = isXmaMedia ? "text-[var(--primary)]" : "text-red-500";
+  const rowBorder = isXmaMedia ? "border-[var(--border)]" : "border-zinc-700";
+  const totalBg = isXmaMedia ? "bg-[var(--background)]" : "bg-zinc-900";
+  const totalAmountColor = isXmaMedia ? "text-[var(--primary)]" : "text-red-400";
+
+  const fmt = (aed: number) =>
+    currencyState ? currencyState.convert(aed) : formatPrice(aed);
+  const currCode = currencyState?.selected.code ?? "AED";
+
   // Override includeTax from props if explicitly set
   const effectiveIncludeTax =
     proposalData.includeTax !== undefined
@@ -97,15 +114,15 @@ const SummarySection: React.FC<SummarySectionProps> = ({
   const isAcceptedOrPaid = ["accepted", "paid"].includes(status.toLowerCase());
 
   return (
-    <div className="mb-8 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-lg p-6 shadow-lg border border-zinc-700">
+    <div className={`mb-8 rounded-lg p-6 shadow-lg ${wrapperBg}`}>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-red-500">Investment Summary</h2>
+        <h2 className={`text-xl font-bold ${headingColor}`}>Investment Summary</h2>
       </div>
 
       <div className="space-y-3 mb-6">
         {/* Package */}
         {proposalData.includePackage && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 pb-3 border-b border-zinc-700">
+          <div className={`grid grid-cols-1 lg:grid-cols-12 gap-2 pb-3 border-b ${rowBorder}`}>
             <div className="col-span-10">
               <div className="flex items-center">
                 <span className="font-medium">{getPackageName()} Package</span>
@@ -113,16 +130,14 @@ const SummarySection: React.FC<SummarySectionProps> = ({
                   <span className="ml-2 text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded">
                     {discounts.packageDiscount.type === "percentage"
                       ? `${discounts.packageDiscount.value}% OFF`
-                      : `-${formatPrice(discounts.packageDiscount.value)} AED`}
+                      : `-${fmt(discounts.packageDiscount.value)} ${currCode}`}
                   </span>
                 )}
               </div>
             </div>
 
             <div className="col-span-2 text-right">
-              <span>
-                {formatPrice(priceDetails.discountedPackagePrice)} AED
-              </span>
+              <span>{fmt(priceDetails.discountedPackagePrice)} {currCode}</span>
             </div>
           </div>
         )}
@@ -131,7 +146,7 @@ const SummarySection: React.FC<SummarySectionProps> = ({
         {proposalData.selectedServices &&
           proposalData.selectedServices.length > 0 && (
             <>
-              <h3 className="font-medium text-zinc-400 mt-4">Services</h3>
+              <h3 className={`font-medium mt-4 ${isXmaMedia ? 'text-[var(--muted-foreground)]' : 'text-zinc-400'}`}>Services</h3>
               {proposalData.selectedServices.map((service) => {
                 const serviceDiscount = discounts.serviceDiscounts[
                   service.id
@@ -147,7 +162,7 @@ const SummarySection: React.FC<SummarySectionProps> = ({
                 return (
                   <div
                     key={service.id}
-                    className="grid grid-cols-1 lg:grid-cols-12 gap-2 pb-3 border-b border-zinc-700"
+                    className={`grid grid-cols-1 lg:grid-cols-12 gap-2 pb-3 border-b ${rowBorder}`}
                   >
                     <div className="col-span-10">
                       <div className="flex items-center">
@@ -156,21 +171,19 @@ const SummarySection: React.FC<SummarySectionProps> = ({
                           <span className="ml-2 text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded">
                             {serviceDiscount.type === "percentage"
                               ? `${serviceDiscount.value}% OFF`
-                              : `-${formatPrice(serviceDiscount.value)} AED`}
+                              : `-${fmt(serviceDiscount.value)} ${currCode}`}
                           </span>
                         )}
                       </div>
                       {(service.monthly || service.is_monthly) && (
                         <div className="text-xs text-zinc-400">
-                          +{service.setupFee || service.setup_fee} AED/month
+                          +{fmt(service.setupFee || service.setup_fee || 0)} {currCode}/month
                         </div>
                       )}
                     </div>
 
                     <div className="col-span-2 text-right">
-                      <span>
-                        {formatPrice(discountedService.discountedPrice)} AED
-                      </span>
+                      <span>{fmt(discountedService.discountedPrice)} {currCode}</span>
                     </div>
                   </div>
                 );
@@ -179,73 +192,71 @@ const SummarySection: React.FC<SummarySectionProps> = ({
           )}
 
         {/* Subtotal */}
-        <div className="flex justify-between items-center pt-2 pb-3 border-b border-zinc-700">
+        <div className={`flex justify-between items-center pt-2 pb-3 border-b ${rowBorder}`}>
           <span className="font-medium">Subtotal</span>
-          <span>{formatPrice(priceDetails.subtotal)} AED</span>
+          <span>{fmt(priceDetails.subtotal)} {currCode}</span>
         </div>
 
         {/* Overall Discount */}
         {discounts.overallDiscount.value > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 pb-3 border-b border-zinc-700">
+          <div className={`grid grid-cols-1 lg:grid-cols-12 gap-2 pb-3 border-b ${rowBorder}`}>
             <div className="col-span-10">
               <span className="font-medium">Overall Discount</span>
               <span className="ml-2 text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded">
                 {discounts.overallDiscount.type === "percentage"
                   ? `${discounts.overallDiscount.value}% OFF`
-                  : `-${formatPrice(discounts.overallDiscount.value)} AED`}
+                  : `-${fmt(discounts.overallDiscount.value)} ${currCode}`}
               </span>
             </div>
 
             <div className="col-span-2 text-right text-green-400">
-              -{formatPrice(priceDetails.overallDiscountAmount)} AED
+              -{fmt(priceDetails.overallDiscountAmount)} {currCode}
             </div>
           </div>
         )}
 
         {/* Total before tax (only shown when tax is included) */}
         {effectiveIncludeTax && (
-          <div className="flex justify-between items-center pt-2 pb-3 border-b border-zinc-700">
+          <div className={`flex justify-between items-center pt-2 pb-3 border-b ${rowBorder}`}>
             <span className="font-medium">Total before tax</span>
-            <span>{formatPrice(priceDetails.finalPriceBeforeTax)} AED</span>
+            <span>{fmt(priceDetails.finalPriceBeforeTax)} {currCode}</span>
           </div>
         )}
 
         {/* Tax (5%) */}
         {effectiveIncludeTax && (
-          <div className="flex justify-between items-center pt-2 pb-3 border-b border-zinc-700">
+          <div className={`flex justify-between items-center pt-2 pb-3 border-b ${rowBorder}`}>
             <span className="font-medium">
               VAT ({(TAX_RATE * 100).toFixed(0)}%)
             </span>
-            <span>{formatPrice(priceDetails.taxAmount)} AED</span>
+            <span>{fmt(priceDetails.taxAmount)} {currCode}</span>
           </div>
         )}
       </div>
 
       {/* Total */}
-      <div className="bg-zinc-900 p-4 rounded-lg">
+      <div className={`${totalBg} p-4 rounded-lg`}>
         <div className="flex justify-between items-center text-lg font-bold">
           <span>
             Total Investment {effectiveIncludeTax ? "(Inc. VAT)" : ""}
           </span>
-          <span className="text-2xl text-red-400">
-            {isNaN(
-              parseFloat(priceDetails.formattedFinalPrice.replace(/,/g, "")),
-            )
-              ? "0 AED"
-              : `${priceDetails.formattedFinalPrice} AED`}
+          <span className={`text-2xl ${totalAmountColor}`}>
+            {isNaN(priceDetails.finalPrice)
+              ? `0 ${currCode}`
+              : `${fmt(priceDetails.finalPrice)} ${currCode}`}
           </span>
         </div>
 
         {showMonthlyFees && (
-          <div className="mt-2 text-sm text-zinc-400 flex justify-between">
+          <div className={`mt-2 text-sm flex justify-between ${isXmaMedia ? 'text-[var(--muted-foreground)]' : 'text-zinc-400'}`}>
             <span>Monthly Subscription Fees</span>
-            <span>{formatPrice(monthlyTotal)} AED/month</span>
+            <span>{fmt(monthlyTotal)} {currCode}/month</span>
           </div>
         )}
 
         <div className="mt-4 text-center">
           {!isAcceptedOrPaid && (
-            <p className="text-sm text-zinc-400">
+            <p className={`text-sm ${isXmaMedia ? 'text-[var(--muted-foreground)]' : 'text-zinc-400'}`}>
               This proposal is valid for 30 days from the date issued.
               {effectiveIncludeTax && (
                 <span className="ml-1">
@@ -276,7 +287,7 @@ const SummarySection: React.FC<SummarySectionProps> = ({
         </div>
 
         {/* Legal Contract Section with Company Stamp */}
-        {orderId && <CompanyStamp orderId={orderId} />}
+        {orderId && <CompanyStamp orderId={orderId} isXmaMedia={isXmaMedia} />}
       </div>
     </div>
   );

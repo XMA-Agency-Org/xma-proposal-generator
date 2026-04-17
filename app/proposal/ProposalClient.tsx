@@ -16,6 +16,7 @@ import ErrorState from "@/components/proposal/ErrorState";
 import ProposalCTA from "@/components/proposal/ProposalCTA";
 import PrintButton from "@/components/proposal/PrintButton";
 import CountdownTimer from "@/components/proposal/CountdownTimer";
+import { CURRENCIES, CurrencyState } from "@/lib/useCurrencyRates";
 
 const ProposalPage = () => {
   const searchParams = useSearchParams();
@@ -251,6 +252,16 @@ const ProposalPage = () => {
     proposalDate: dbProposalDate,
   } = data;
 
+  const storedCurrency = CURRENCIES.find(c => c.code === proposalData.currency) ?? CURRENCIES[0];
+  const currencyState: CurrencyState = {
+    selected: storedCurrency,
+    convert: (aedAmount: number) =>
+      new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(aedAmount * storedCurrency.rate),
+  };
+
   // Check if this is a custom proposal and extract the correct data
   const isCustomProposal = proposalData.isCustomProposal || false;
   const clientName = isCustomProposal
@@ -281,15 +292,18 @@ const ProposalPage = () => {
   // Check if this is a completed/finalized proposal
   const isAcceptedOrPaid = ["accepted", "paid"].includes(status?.toLowerCase());
 
+  const isXmaMedia =
+    !isCustomProposal && proposalData.selectedPackage?.brand === 'xma_media';
+
   return (
-    <div className="min-h-screen bg-zinc-900 text-white py-6 px-4">
+    <div className={`min-h-screen py-6 px-4 ${isXmaMedia ? 'theme-brand bg-[var(--brand-bg)] text-[var(--brand-fg)]' : 'bg-zinc-900 text-white'}`}>
       <div className="max-w-5xl mx-auto">
-        {/* Add the simple Print Button at the top */}
         <div className="flex justify-end mb-4">
           <PrintButton
             proposalData={proposalData}
             orderId={orderId}
             status={status}
+            isXmaMedia={isXmaMedia}
           />
         </div>
 
@@ -298,33 +312,38 @@ const ProposalPage = () => {
           companyName={companyName}
           proposalDate={proposalDate}
           orderId={orderId}
+          isXmaMedia={isXmaMedia}
         />
 
         {/* Proposal Status and Countdown */}
         {(actuallyExpired || (expirationDate && !isAcceptedOrPaid)) && (
-          <div className="mb-8 bg-zinc-800 rounded-lg p-6 shadow-lg border-l-4 border-orange-500">
+          <div className={`mb-8 rounded-lg p-6 shadow-lg border-l-4 ${
+            isXmaMedia
+              ? 'bg-[var(--card)] border-[var(--primary)]'
+              : 'bg-zinc-800 border-orange-500'
+          }`}>
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-orange-500 mb-2">
-                  {actuallyExpired ? "Proposal Expired" : "Proposal Validity"}
+                <h2 className={`text-xl font-bold mb-2 ${isXmaMedia ? 'text-[var(--primary)]' : 'text-orange-500'}`}>
+                  {actuallyExpired ? "PROPOSAL EXPIRED" : "PROPOSAL VALIDITY"}
                 </h2>
                 {actuallyExpired ? (
-                  <p className="text-zinc-300">
+                  <p className={isXmaMedia ? 'text-[var(--foreground)]/70' : 'text-zinc-300'}>
                     This proposal has expired and is no longer available for
                     acceptance. Please contact us to request a new proposal.
                   </p>
                 ) : (
-                  <p className="text-zinc-300">
+                  <p className={isXmaMedia ? 'text-[var(--foreground)]/70' : 'text-zinc-300'}>
                     This proposal is valid until the countdown reaches zero.
                   </p>
                 )}
               </div>
               {!actuallyExpired && expirationDate && (
                 <div className="text-right">
-                  <div className="text-sm text-zinc-400 mb-2">Expires in:</div>
+                  <div className={`text-sm mb-2 ${isXmaMedia ? 'text-[var(--foreground)]/50' : 'text-zinc-400'}`}>Expires in:</div>
                   <CountdownTimer
                     expiresAt={expirationDate.toISOString()}
-                    className="text-sm"
+                    className={`text-sm${isXmaMedia ? ' xma-media' : ''}`}
                     status={status}
                   />
                 </div>
@@ -334,12 +353,12 @@ const ProposalPage = () => {
         )}
 
         {additionalInfo && (
-          <div className="mb-8 bg-zinc-800 rounded-lg p-6 shadow-lg">
-            <h2 className="text-xl font-bold mb-4 text-red-500">
+          <div className={`mb-8 rounded-lg p-6 shadow-lg ${isXmaMedia ? 'bg-[var(--card)]' : 'bg-zinc-800'}`}>
+            <h2 className={`text-xl font-bold mb-4 ${isXmaMedia ? 'text-[var(--primary)]' : 'text-red-500'}`}>
               Project Details
             </h2>
-            <div className="bg-zinc-900/50 p-5 rounded-lg">
-              <div className="whitespace-pre-wrap text-zinc-300">
+            <div className={`p-5 rounded-lg ${isXmaMedia ? 'bg-[var(--background)]/50' : 'bg-zinc-900/50'}`}>
+              <div className={`whitespace-pre-wrap ${isXmaMedia ? 'text-[var(--foreground)]/80' : 'text-zinc-300'}`}>
                 {additionalInfo}
               </div>
             </div>
@@ -415,6 +434,8 @@ const ProposalPage = () => {
               discount={discounts.packageDiscount}
               onDiscountChange={() => {}}
               includePackage={proposalData.includePackage !== false}
+              isXmaMedia={isXmaMedia}
+              currencyState={currencyState}
             />
 
             {proposalData.selectedServices &&
@@ -423,6 +444,7 @@ const ProposalPage = () => {
                   selectedServices={proposalData.selectedServices}
                   discounts={discounts.serviceDiscounts}
                   onDiscountChange={() => {}}
+                  isXmaMedia={isXmaMedia}
                 />
               )}
           </>
@@ -481,20 +503,25 @@ const ProposalPage = () => {
             discounts={discounts}
             orderId={orderId}
             status={status}
+            isXmaMedia={isXmaMedia}
+            currencyState={currencyState}
           />
         )}
 
         {/* Terms and Conditions */}
-        <ProposalTermsSection proposalData={{
-          ...proposalData,
-          tos_template_id: data.tos_template_id,
-          tos_snapshot: data.tos_snapshot,
-          created_at: data.created_at,
-          proposalDate: data.proposalDate
-        }} />
+        <ProposalTermsSection
+          proposalData={{
+            ...proposalData,
+            tos_template_id: data.tos_template_id,
+            tos_snapshot: data.tos_snapshot,
+            created_at: data.created_at,
+            proposalDate: data.proposalDate,
+          }}
+          isXmaMedia={isXmaMedia}
+        />
 
         {/* Only show CTA section if proposal is not paid and not expired */}
-        {status !== "paid" && !actuallyExpired && <ProposalCTA />}
+        {status !== "paid" && !actuallyExpired && <ProposalCTA isXmaMedia={isXmaMedia} />}
 
         {/* Show expired message instead of CTA if expired */}
         {actuallyExpired && status !== "paid" && (
@@ -528,7 +555,7 @@ const ProposalPage = () => {
           </div>
         )}
 
-        <ProposalFooter />
+        <ProposalFooter isXmaMedia={isXmaMedia} />
       </div>
     </div>
   );

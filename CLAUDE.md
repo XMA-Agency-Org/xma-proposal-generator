@@ -96,6 +96,29 @@ SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_BASE_URL
 ```
 
+## Brand Toggle on Packages (added 2026-04-17)
+
+### Architecture
+- `packages` table has a `brand` column: `text not null default 'xma' check (brand in ('xma', 'xma_media'))`
+- Admin → Packages: each package has a brand segmented control (XMA / XMA Media)
+- Proposal Generator: brand toggle above the package grid filters packages client-side by `pkg.brand === selectedBrand`
+- Brand is stored in the `selectedPackage` JSON snapshot on the proposal — no separate column on `proposals`
+- Client view derives `isXmaMedia` from `proposalData.selectedPackage?.brand === 'xma_media'`
+- Historical proposals always render with their original theme (backward-compat)
+
+### XMA Media Theme
+- CSS class `.theme-brand` in `globals.css` — cream bg (`--brand-bg`), purple accent (`--primary`), lime secondary, Manrope + DM Sans
+- Apply wrapper: `<div className="theme-brand bg-[var(--brand-bg)] text-[var(--brand-fg)]">`
+- Fonts: `Manrope` (max weight 800) + `DM Sans` — loaded in root `layout.tsx`
+- All proposal sub-components accept `isXmaMedia?: boolean` prop and use conditional CSS class maps
+- XMA Media logo: `public/XMA-01.png` (untracked); XMA logo: `public/XMA-White.svg`
+- XMA Media footer contact: `admin@xma.ae`, `+971 50 363 6856`, `xmamedia.ai`
+
+### Removed
+- `/offers` public product pages, `/admin/offerings`, `/admin/orders`, Stripe checkout — all code deleted
+- `offerings` and `orders` DB tables remain in place (no destructive migration)
+- "Additional Services" section removed from proposal generator form; historical proposals still render services
+
 ## Important Implementation Notes
 
 ### Supabase Client Usage

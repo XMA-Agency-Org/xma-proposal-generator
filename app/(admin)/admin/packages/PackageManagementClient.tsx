@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useMemo, useCallback } from "react";
+import { useReducer, useMemo, useCallback, useState } from "react";
 import { brandButtonVariants } from "@/lib/design-system";
 import { Plus, Trash2 } from "lucide-react";
 import { PackageCard } from "./components/PackageCard";
@@ -23,6 +23,7 @@ interface Package {
   usd_price: number | null;
   is_popular: boolean | null;
   description: string | null;
+  brand: 'xma' | 'xma_media';
   created_at: string | null;
   updated_at: string | null;
   features: PackageFeature[];
@@ -135,6 +136,8 @@ interface PackageManagementClientProps {
 export default function PackageManagementClient({
   initialPackages,
 }: PackageManagementClientProps) {
+  const [activeTab, setActiveTab] = useState<'xma' | 'xma_media'>('xma');
+
   const [state, dispatch] = useReducer(packageReducer, {
     packages: initialPackages,
     collapsedPackages: new Set(initialPackages.map(pkg => pkg.id)),
@@ -230,8 +233,11 @@ export default function PackageManagementClient({
     [handleBulkDeleteFeatures]
   );
 
-  const memoizedPackageCards = useMemo(() => 
-    Array.isArray(packages) ? packages.map((pkg) => (
+  const memoizedPackageCards = useMemo(() => {
+    const filtered = Array.isArray(packages)
+      ? packages.filter(pkg => (pkg.brand ?? 'xma') === activeTab)
+      : [];
+    return filtered.map((pkg) => (
       <PackageCard
         key={pkg.id}
         pkg={pkg}
@@ -253,27 +259,27 @@ export default function PackageManagementClient({
         onDragEndAction={handleDragEnd}
         markAsChangedAction={() => {}}
       />
-    )) : [], 
-    [
-      packages, 
-      collapsedPackages, 
-      editingPackages, 
-      isSaving, 
-      selectedFeatures, 
-      setPackages, 
-      toggleCollapse, 
-      startEditMode, 
-      cancelPackageEdit, 
-      savePackageChanges, 
-      handleDuplicatePackage, 
-      handleDeletePackage, 
-      updatePackageField, 
-      toggleFeatureSelection, 
-      handleAddFeature, 
-      handleDeleteFeature, 
-      handleDragEnd
-    ]
-  );
+    ));
+  }, [
+    packages,
+    activeTab,
+    collapsedPackages,
+    editingPackages,
+    isSaving,
+    selectedFeatures,
+    setPackages,
+    toggleCollapse,
+    startEditMode,
+    cancelPackageEdit,
+    savePackageChanges,
+    handleDuplicatePackage,
+    handleDeletePackage,
+    updatePackageField,
+    toggleFeatureSelection,
+    handleAddFeature,
+    handleDeleteFeature,
+    handleDragEnd
+  ]);
 
   return (
     <div className="bg-surface-primary min-h-screen">
@@ -282,7 +288,7 @@ export default function PackageManagementClient({
           <h1 className="text-2xl font-bold text-text-primary">Package Management</h1>
           <div className="flex gap-2">
             {selectedFeatures.size > 0 && (
-              <button 
+              <button
                 className={`${brandButtonVariants({ variant: "destructive" })} flex items-center`}
                 onClick={() => handleBulkDeleteFeaturesWithClear(selectedFeatures)}
               >
@@ -290,17 +296,40 @@ export default function PackageManagementClient({
                 Delete {selectedFeatures.size} Features
               </button>
             )}
-            <button 
+            <button
               className={`${brandButtonVariants({ variant: "primary" })} flex items-center`}
-              onClick={handleAddPackage}
+              onClick={() => handleAddPackage(activeTab)}
             >
               <Plus className="mr-2 h-4 w-4" /> Add Package
             </button>
           </div>
         </div>
 
+        <div className="flex border-b border-surface-interactive mb-6">
+          {(['xma', 'xma_media'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                activeTab === tab
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              {tab === 'xma' ? 'XMA' : 'XMA Media'}
+              <span className="ml-2 text-xs opacity-60">
+                ({packages.filter(p => (p.brand ?? 'xma') === tab).length})
+              </span>
+            </button>
+          ))}
+        </div>
+
         <div className="space-y-6">
-          {memoizedPackageCards}
+          {memoizedPackageCards.length > 0 ? memoizedPackageCards : (
+            <div className="text-center py-16 text-text-muted">
+              No {activeTab === 'xma_media' ? 'XMA Media' : 'XMA'} packages yet. Click "Add Package" to create one.
+            </div>
+          )}
         </div>
       </div>
     </div>

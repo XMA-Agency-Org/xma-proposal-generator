@@ -236,6 +236,51 @@ body {
   color-scheme: dark;
 }
 
+/* xmamedia.ai public brand theme — activated via .theme-brand on body */
+.theme-brand {
+  color-scheme: light;
+
+  --brand-bg:          oklch(0.955 0.021 82);
+  --brand-fg:          oklch(0.094 0.018 265);
+  --brand-accent:      oklch(0.444 0.284 291);
+  --brand-accent-2:    oklch(0.847 0.178 116);
+  --brand-accent-fg:   oklch(0.988 0 0);
+  --brand-muted:       oklch(0.929 0.018 82);
+  --brand-muted-fg:    oklch(0.382 0.017 271);
+  --brand-border:      oklch(0.798 0.024 82);
+
+  /* Map Tailwind semantic tokens so existing shadcn primitives work */
+  --background: var(--brand-bg);
+  --foreground: var(--brand-fg);
+  --card: var(--brand-muted);
+  --card-foreground: var(--brand-fg);
+  --popover: var(--brand-bg);
+  --popover-foreground: var(--brand-fg);
+  --primary: var(--brand-accent);
+  --primary-foreground: var(--brand-accent-fg);
+  --secondary: var(--brand-muted);
+  --secondary-foreground: var(--brand-fg);
+  --muted: var(--brand-muted);
+  --muted-foreground: var(--brand-muted-fg);
+  --accent: var(--brand-accent-2);
+  --accent-foreground: var(--brand-fg);
+  --border: var(--brand-border);
+  --input: var(--brand-muted);
+  --ring: var(--brand-accent);
+
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
+
+.theme-brand h1,
+.theme-brand h2,
+.theme-brand h3,
+.theme-brand h4 {
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
 /* Print-specific styles */
 @media print {
   body {
