@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { requireAuth } from "@/lib/api-auth";
 import { createAnimatedProposalSchema } from "@/lib/animated-proposal-schema";
+import { validateAnimatedProposal } from "@/lib/animated-proposal-validation";
 
 export async function POST(request: Request) {
   const { user, error: authError } = await requireAuth();
@@ -15,10 +16,26 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
+  const { package_id, tos_template_id, override_warnings, ...insertData } = parsed.data;
 
-  const { data, error } = await supabase
-    .from("animated_proposals" as any)
-    .insert({ ...parsed.data, created_by: user!.id, status: "draft" })
+  let pkg = null;
+  let tos = null;
+
+  if (package_id) {
+    const { data } = await (supabase as any).from("packages").select("price, currency, usd_price, brand").eq("id", package_id).single();
+    pkg = data;
+  }
+
+  if (tos_template_id) {
+    const { data } = await (supabase as any).from("tos_templates").select("terms, brand").eq("id", tos_template_id).single();
+    tos = data;
+  }
+
+  const { warnings } = validateAnimatedProposal(parsed.data, pkg, tos);
+
+  const { data, error } = await (supabase as any)
+    .from("animated_proposals")
+    .insert({ ...insertData, package_id: package_id ?? null, tos_template_id: tos_template_id ?? null, created_by: user!.id, status: "draft" })
     .select()
     .single();
 
@@ -29,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data, { status: 201 });
+  return NextResponse.json({ ...data, warnings }, { status: 201 });
 }
 
 export async function GET(request: Request) {

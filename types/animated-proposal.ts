@@ -86,6 +86,8 @@ export interface AnimatedProposal {
   provider_signed_at: string | null;
   signed_pdf_url: string | null;
 
+  package_id: string | null;
+  tos_template_id: string | null;
   expires_at: string | null;
   archived_at: string | null;
   created_at: string;
