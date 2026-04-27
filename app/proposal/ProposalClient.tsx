@@ -296,7 +296,7 @@ const ProposalPage = () => {
     !isCustomProposal && proposalData.selectedPackage?.brand === 'xma_media';
 
   return (
-    <div className={`min-h-screen py-6 px-4 ${isXmaMedia ? 'theme-brand bg-[var(--brand-bg)] text-[var(--brand-fg)]' : 'bg-zinc-900 text-white'}`}>
+    <div className={`min-h-screen py-6 px-4 ${isXmaMedia ? 'theme-brand bg-(--brand-bg) text-(--brand-fg)' : 'bg-zinc-900 text-white'}`}>
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-end mb-4">
           <PrintButton
@@ -319,28 +319,28 @@ const ProposalPage = () => {
         {(actuallyExpired || (expirationDate && !isAcceptedOrPaid)) && (
           <div className={`mb-8 rounded-lg p-6 shadow-lg border-l-4 ${
             isXmaMedia
-              ? 'bg-[var(--card)] border-[var(--primary)]'
+              ? 'bg-(--card) border-(--primary)'
               : 'bg-zinc-800 border-orange-500'
           }`}>
             <div className="flex items-center justify-between">
               <div>
-                <h2 className={`text-xl font-bold mb-2 ${isXmaMedia ? 'text-[var(--primary)]' : 'text-orange-500'}`}>
+                <h2 className={`text-xl font-bold mb-2 ${isXmaMedia ? 'text-(--primary)' : 'text-orange-500'}`}>
                   {actuallyExpired ? "PROPOSAL EXPIRED" : "PROPOSAL VALIDITY"}
                 </h2>
                 {actuallyExpired ? (
-                  <p className={isXmaMedia ? 'text-[var(--foreground)]/70' : 'text-zinc-300'}>
+                  <p className={isXmaMedia ? 'text-(--foreground)/70' : 'text-zinc-300'}>
                     This proposal has expired and is no longer available for
                     acceptance. Please contact us to request a new proposal.
                   </p>
                 ) : (
-                  <p className={isXmaMedia ? 'text-[var(--foreground)]/70' : 'text-zinc-300'}>
+                  <p className={isXmaMedia ? 'text-(--foreground)/70' : 'text-zinc-300'}>
                     This proposal is valid until the countdown reaches zero.
                   </p>
                 )}
               </div>
               {!actuallyExpired && expirationDate && (
                 <div className="text-right">
-                  <div className={`text-sm mb-2 ${isXmaMedia ? 'text-[var(--foreground)]/50' : 'text-zinc-400'}`}>Expires in:</div>
+                  <div className={`text-sm mb-2 ${isXmaMedia ? 'text-(--foreground)/50' : 'text-zinc-400'}`}>Expires in:</div>
                   <CountdownTimer
                     expiresAt={expirationDate.toISOString()}
                     className={`text-sm${isXmaMedia ? ' xma-media' : ''}`}
@@ -353,12 +353,12 @@ const ProposalPage = () => {
         )}
 
         {additionalInfo && (
-          <div className={`mb-8 rounded-lg p-6 shadow-lg ${isXmaMedia ? 'bg-[var(--card)]' : 'bg-zinc-800'}`}>
-            <h2 className={`text-xl font-bold mb-4 ${isXmaMedia ? 'text-[var(--primary)]' : 'text-red-500'}`}>
+          <div className={`mb-8 rounded-lg p-6 shadow-lg ${isXmaMedia ? 'bg-(--card)' : 'bg-zinc-800'}`}>
+            <h2 className={`text-xl font-bold mb-4 ${isXmaMedia ? 'text-(--primary)' : 'text-red-500'}`}>
               Project Details
             </h2>
-            <div className={`p-5 rounded-lg ${isXmaMedia ? 'bg-[var(--background)]/50' : 'bg-zinc-900/50'}`}>
-              <div className={`whitespace-pre-wrap ${isXmaMedia ? 'text-[var(--foreground)]/80' : 'text-zinc-300'}`}>
+            <div className={`p-5 rounded-lg ${isXmaMedia ? 'bg-(--background)/50' : 'bg-zinc-900/50'}`}>
+              <div className={`whitespace-pre-wrap ${isXmaMedia ? 'text-(--foreground)/80' : 'text-zinc-300'}`}>
                 {additionalInfo}
               </div>
             </div>

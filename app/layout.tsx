@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Manrope, DM_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Manrope, DM_Sans, Fraunces, Caveat } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/utils/supabase/server";
 import { AuthProvider } from "@/components/auth/AuthProvider";
@@ -30,6 +30,19 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  axes: ["opsz", "SOFT", "WONK"],
+  display: "swap",
+});
+
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "XMA Agency Proposal System",
   description: "Create and manage client proposals",
@@ -53,7 +66,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} ${dmSans.variable} dark antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} ${dmSans.variable} ${fraunces.variable} ${caveat.variable} dark antialiased`}
       >
         <QueryProvider>
           <AuthProvider initialSession={session}>{children}</AuthProvider>
