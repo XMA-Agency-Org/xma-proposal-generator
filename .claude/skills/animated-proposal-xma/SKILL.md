@@ -22,6 +22,24 @@ Add `MCP_DEFAULT_AUTHOR_ID` to `.env.local` (set it to your Supabase user UUID).
 
 ## Full Workflow
 
+### Step 0: Pre-flight interview (MANDATORY — do this before anything else)
+
+Before calling MCP tools, ask these 7 questions in one message:
+
+```
+Quick questions before I build this:
+
+1. Paste the discovery call transcript (or summarise if you don't have it)
+2. Brand — XMA or XMA Media? (default: XMA Media)
+3. Your name (goes on the proposal as provider)?
+4. Total investment — amount + currency (AED or USD)?
+5. Monthly retainer? If yes — amount and what's included?
+6. Milestone split — 50/50 or different?
+7. Payment link (Stripe, PayTabs, etc.)? — optional, can add later
+```
+
+Everything else (client name, company, pain points, scope, timeline, obligations) gets extracted from the transcript. Only ask follow-up questions if the transcript is missing critical info.
+
 ### Step 1: Gather context from rep
 
 Ask the rep for:
@@ -74,6 +92,7 @@ Every piece of content must come from the transcript, snippets, or package featu
 | `total_days` | Project duration in business days |
 | `guarantee_text` | From snippets — customize if specific metrics agreed |
 | `terms[]` | From `get_tos_template().mapped_clauses` — customize clause 03 |
+| `stripe_link` | Payment URL from rep (optional) — omit if not provided |
 | `package_id` | UUID from `list_packages`, or null |
 | `tos_template_id` | UUID from `list_tos_templates` |
 
