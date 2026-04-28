@@ -12,7 +12,7 @@ export async function POST(
   const { id } = await params;
   const supabase = await createClient();
 
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("animated_proposals")
     .update({ archived_at: new Date().toISOString(), status: "archived" })
     .eq("id", id);

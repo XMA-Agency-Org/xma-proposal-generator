@@ -14,7 +14,7 @@ export async function GET(
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("animated_proposal_events")
     .select("*")
     .eq("proposal_id", id)
@@ -42,7 +42,7 @@ export async function POST(
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   const ua = request.headers.get("user-agent") ?? null;
 
-  const { error } = await (supabase as any).from("animated_proposal_events").insert({
+  const { error } = await supabase.from("animated_proposal_events").insert({
     proposal_id: id,
     event_type: parsed.data.event_type,
     meta: parsed.data.meta ?? null,

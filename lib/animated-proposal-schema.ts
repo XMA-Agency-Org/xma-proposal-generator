@@ -70,11 +70,22 @@ export const createAnimatedProposalSchema = z.object({
   override_warnings: z.boolean().default(false),
 });
 
+export const ANIMATED_STATUS = z.enum(["sent", "client_signed", "counter_signed", "paid", "archived"]);
+export type AnimatedStatus = z.infer<typeof ANIMATED_STATUS>;
+
+export const ANIMATED_STATUS_TRANSITIONS: Record<AnimatedStatus, AnimatedStatus[]> = {
+  sent: ["client_signed", "counter_signed", "paid", "archived"],
+  client_signed: ["counter_signed", "paid", "archived"],
+  counter_signed: ["paid", "archived"],
+  paid: ["archived"],
+  archived: [],
+};
+
 export const updateAnimatedProposalSchema = createAnimatedProposalSchema
   .omit({ slug: true, created_by: true })
   .partial()
   .extend({
-    status: z.enum(["draft", "pending_approval", "approved", "sent", "client_signed", "counter_signed", "paid", "archived"]).optional(),
+    status: ANIMATED_STATUS.optional(),
   });
 
 export const signClientSchema = z.object({

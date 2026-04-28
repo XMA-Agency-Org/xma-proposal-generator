@@ -1,6 +1,6 @@
 # Animated Proposal — XMA / XMA Media
 
-Create a highly personalized animated proposal website for an XMA or XMA Media prospect. Proposals live at `https://xma-proposal-generator.vercel.app/animated/<token>` once approved by admin.
+Create a highly personalized animated proposal website for an XMA or XMA Media prospect. Proposals live at `https://xma-proposal-generator.vercel.app/proposal/<token>` immediately after creation.
 
 ## Prerequisites
 
@@ -17,8 +17,7 @@ Add `MCP_DEFAULT_AUTHOR_ID` to `.env.local` (set it to your Supabase user UUID).
 1. Paste the discovery call transcript when asked.
 2. Claude fetches packages, T&C, and snippets via MCP tools — no manual research needed.
 3. Review the drafted content. Correct any numbers or details.
-4. Claude submits with one tool call. You get a draft URL and any warnings.
-5. Admin approves before the link goes live.
+4. Claude submits with one tool call. You get a live URL and any warnings.
 
 ## Full Workflow
 

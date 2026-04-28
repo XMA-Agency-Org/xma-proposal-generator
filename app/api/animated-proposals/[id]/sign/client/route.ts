@@ -16,7 +16,7 @@ export async function POST(
 
   const supabase = createServiceClient();
 
-  const { data: proposal } = await (supabase as any)
+  const { data: proposal } = await supabase
     .from("animated_proposals")
     .select("id, status, client_signed_at, token")
     .eq("id", id)
@@ -26,7 +26,7 @@ export async function POST(
     return NextResponse.json({ error: "Proposal not found" }, { status: 404 });
   }
 
-  if (!["approved", "sent"].includes(proposal.status)) {
+  if (proposal.status !== "sent") {
     return NextResponse.json({ error: "Proposal is not open for signing" }, { status: 400 });
   }
 
@@ -53,7 +53,7 @@ export async function POST(
 
   const signedAt = new Date().toISOString();
 
-  const { error: updateError } = await (supabase as any)
+  const { error: updateError } = await supabase
     .from("animated_proposals")
     .update({
       client_signature_url: urlData.publicUrl,
@@ -66,7 +66,7 @@ export async function POST(
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
-  await (supabase as any).from("animated_proposal_events").insert({
+  await supabase.from("animated_proposal_events").insert({
     proposal_id: id,
     event_type: "sign_submit",
     meta: { role: "client" },

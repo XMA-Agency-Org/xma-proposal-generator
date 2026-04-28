@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import axios from "axios";
 import ProposalCard from "./ProposalCard";
 import { AnimatedProposalCard } from "./AnimatedProposalCard";
 import Toast from "@/components/ui/Toast";
@@ -57,18 +58,12 @@ export default function ProposalsList({ initialClassic, initialAnimated, userRol
       }
 
       const [classicRes, animatedRes] = await Promise.all([
-        fetch(`/api/proposals?${classicParams}`),
-        fetch(`/api/animated-proposals?${animatedParams}`),
+        axios.get(`/api/proposals?${classicParams}`),
+        axios.get(`/api/animated-proposals?${animatedParams}`),
       ]);
 
-      if (classicRes.ok) {
-        const r = await classicRes.json();
-        setClassicProposals(r.proposals || []);
-      }
-      if (animatedRes.ok) {
-        const r = await animatedRes.json();
-        setAnimatedProposals(r.data || []);
-      }
+      setClassicProposals(classicRes.data.proposals || []);
+      setAnimatedProposals(animatedRes.data.data || []);
     } finally {
       setIsLoading(false);
     }
@@ -169,9 +164,6 @@ export default function ProposalsList({ initialClassic, initialAnimated, userRol
   const statusButtons: Array<{ label: string; value: string }> = typeFilter === "animated"
     ? [
         { label: "All", value: "all" },
-        { label: "Draft", value: "draft" },
-        { label: "Pending", value: "pending_approval" },
-        { label: "Approved", value: "approved" },
         { label: "Sent", value: "sent" },
         { label: "Client Signed", value: "client_signed" },
         { label: "Counter Signed", value: "counter_signed" },

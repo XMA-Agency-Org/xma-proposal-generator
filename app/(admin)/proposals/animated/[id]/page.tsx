@@ -1,17 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/AuthProvider";
-import SignatureCanvas from "react-signature-canvas";
-import Link from "next/link";
 import type { AnimatedProposal, AnimatedProposalEvent } from "@/types/animated-proposal";
-import { UnifiedStatusPill } from "@/components/proposal/UnifiedStatusPill";
-import { BrandTag } from "@/components/proposal/BrandTag";
-import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { AnimatedDetailHeader } from "./_components/AnimatedDetailHeader";
+import { CounterSignPanel } from "./_components/CounterSignPanel";
+import { EventsPanel } from "./_components/EventsPanel";
+import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
+import { Archive } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
 
@@ -26,12 +25,12 @@ export default function AnimatedProposalDetailPage() {
   const [proposal, setProposal] = useState<AnimatedProposal | null>(null);
   const [events, setEvents] = useState<AnimatedProposalEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [counterSigning, setCounterSigning] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [statusChanging, setStatusChanging] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const sigRef = useRef<SignatureCanvas>(null);
 
   async function load() {
     setLoading(true);
@@ -57,37 +56,35 @@ export default function AnimatedProposalDetailPage() {
     try {
       const { data } = await axios.patch(`/api/animated-proposals/${id}`, { status: newStatus });
       setProposal(data);
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
       setError(e?.response?.data?.error ?? "Status update failed");
     } finally {
       setStatusChanging(false);
     }
   }
 
-  async function handleArchive() {
-    if (!confirm("Archive this proposal? It will be hidden from active lists.")) return;
+  async function handleArchiveConfirm() {
     setArchiving(true);
     try {
       await axios.post(`/api/animated-proposals/${id}/archive`);
       router.push("/proposals");
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
       setError(e?.response?.data?.error ?? "Archive failed");
       setArchiving(false);
+      setArchiveDialogOpen(false);
     }
   }
 
-  async function handleCounterSign() {
-    if (!sigRef.current || sigRef.current.isEmpty()) {
-      setError("Draw your counter-signature first.");
-      return;
-    }
+  async function handleCounterSign(pngData: string) {
     setCounterSigning(true);
     setError(null);
     try {
-      const pngData = sigRef.current.getCanvas().toDataURL("image/png");
       await axios.post(`/api/animated-proposals/${id}/sign/provider`, { signature_png_base64: pngData });
       await load();
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: string } } };
       setError(e?.response?.data?.error ?? "Counter-sign failed");
     } finally {
       setCounterSigning(false);
@@ -119,7 +116,6 @@ export default function AnimatedProposalDetailPage() {
 
   const isAdmin = userRole === "admin";
   const publicLink = `${BASE_URL}/proposal/${proposal.token}`;
-  const canCounterSign = proposal.status === "client_signed";
 
   return (
     <div className="bg-surface-primary min-h-screen px-6 md:px-10 py-10">
@@ -138,35 +134,18 @@ export default function AnimatedProposalDetailPage() {
           </div>
         )}
 
-        <div className="mb-8">
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div>
-              <div className="flex items-center gap-3 flex-wrap mb-1">
-                <h1 className="text-2xl font-bold">{proposal.project_title}</h1>
-                <BrandTag brand={proposal.brand} size="sm" />
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  Animated
-                </span>
-              </div>
-              <p className="text-text-muted text-sm">{proposal.client_full_name} · {proposal.company_name}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <UnifiedStatusPill kind="animated" status={proposal.status} />
-              {isAdmin && (
-                <select
-                  value={proposal.status}
-                  disabled={statusChanging}
-                  onChange={(e) => handleStatusChange(e.target.value)}
-                  className="text-xs rounded-md border border-border-primary bg-surface-elevated text-text-primary px-2 py-1 disabled:opacity-50 cursor-pointer"
-                >
-                  {["draft","pending_approval","approved","sent","client_signed","counter_signed","paid","archived"].map((s) => (
-                    <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-        </div>
+        <AnimatedDetailHeader
+          proposal={proposal}
+          id={id}
+          isAdmin={isAdmin}
+          statusChanging={statusChanging}
+          archiving={archiving}
+          copiedLink={copiedLink}
+          onStatusChange={handleStatusChange}
+          onArchive={() => setArchiveDialogOpen(true)}
+          onCopyLink={copyLink}
+          onPreview={() => window.open(`${publicLink}?preview=1`, "_blank")}
+        />
 
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           {[
@@ -181,46 +160,12 @@ export default function AnimatedProposalDetailPage() {
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-3 mb-8">
-          <Button variant="outline" size="sm" onClick={copyLink}>
-            {copiedLink ? "Copied!" : "Copy Public Link"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => window.open(`${publicLink}?preview=1`, "_blank")}>
-            Preview →
-          </Button>
-          <Link href={`/proposals/animated/${id}/edit`}>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Edit size={14} />
-              Edit
-            </Button>
-          </Link>
-          {isAdmin && !["archived", "paid"].includes(proposal.status) && (
-            <Button variant="outline" size="sm" onClick={handleArchive} disabled={archiving}>
-              {archiving ? "Archiving…" : "Archive"}
-            </Button>
-          )}
-        </div>
-
-        {canCounterSign && (
-          <div className="mb-8 border border-border-primary rounded-lg p-6">
-            <h3 className="font-bold mb-4">Counter-Sign</h3>
-            <p className="text-text-muted text-sm mb-4">Client has signed. Draw your counter-signature below.</p>
-            <div className="border-2 border-brand-primary rounded-lg overflow-hidden mb-4">
-              <SignatureCanvas
-                ref={sigRef}
-                penColor="#dc2626"
-                canvasProps={{ className: "w-full", height: 160, style: { background: "white" } }}
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button size="sm" onClick={handleCounterSign} disabled={counterSigning}>
-                {counterSigning ? "Submitting…" : "Submit Counter-Signature"}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => sigRef.current?.clear()}>
-                Clear
-              </Button>
-            </div>
-          </div>
+        {proposal.status === "client_signed" && (
+          <CounterSignPanel
+            counterSigning={counterSigning}
+            onSubmit={handleCounterSign}
+            onError={(msg) => setError(msg)}
+          />
         )}
 
         {proposal.stripe_link && (
@@ -237,20 +182,20 @@ export default function AnimatedProposalDetailPage() {
           </div>
         )}
 
-        {events.length > 0 && (
-          <div className="border border-border-primary rounded-lg p-6">
-            <h3 className="font-bold mb-4">Engagement Events</h3>
-            <div className="space-y-2">
-              {events.slice(0, 20).map((ev) => (
-                <div key={ev.id} className="flex items-center justify-between text-sm">
-                  <span className="capitalize text-text-secondary">{ev.event_type.replace(/_/g, " ")}</span>
-                  <span className="text-text-muted text-xs">{format(new Date(ev.created_at), "dd MMM HH:mm")}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <EventsPanel events={events} />
       </div>
+
+      <ConfirmationDialog
+        isOpen={archiveDialogOpen}
+        title="Archive Proposal"
+        message="Archive this proposal? It will be hidden from active lists."
+        confirmText="Archive"
+        cancelText="Cancel"
+        onConfirm={handleArchiveConfirm}
+        onCancel={() => setArchiveDialogOpen(false)}
+        isProcessing={archiving}
+        icon={<Archive size={24} />}
+      />
     </div>
   );
 }

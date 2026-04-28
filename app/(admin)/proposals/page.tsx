@@ -46,7 +46,7 @@ async function getClassicProposals(userId: string, userRole: "admin" | "sales_re
 async function getAnimatedProposals(userId: string, userRole: "admin" | "sales_rep", showArchived: boolean, filterByCreator?: string): Promise<AnimatedProposal[]> {
   try {
     const supabase = await createClient();
-    let query = (supabase as any)
+    let query = supabase
       .from("animated_proposals")
       .select("id, token, slug, status, brand, client_full_name, company_name, project_title, total_price_cents, currency, created_at, updated_at, archived_at, expires_at, created_by, client_signed_at, provider_signed_at")
       .order("created_at", { ascending: false });

@@ -76,6 +76,10 @@
   --color-status-rejected-foreground: var(--status-rejected-foreground);
   --color-status-expired: var(--status-expired);
   --color-status-expired-foreground: var(--status-expired-foreground);
+  --color-status-client-signed: var(--status-client-signed);
+  --color-status-client-signed-foreground: var(--status-client-signed-foreground);
+  --color-status-counter-signed: var(--status-counter-signed);
+  --color-status-counter-signed-foreground: var(--status-counter-signed-foreground);
   
   /* XMA Design System - Interactive States */
   --color-interactive-primary-hover: var(--interactive-primary-hover);
@@ -197,6 +201,10 @@
   --status-rejected-foreground: oklch(97.1% 0.013 17.38);
   --status-expired: oklch(64.6% 0.222 41.116); /* orange-600 - Warning state */
   --status-expired-foreground: oklch(98.7% 0.026 102.212);
+  --status-client-signed: oklch(48.8% 0.243 264.376 / 20%); /* blue tint - Client signed */
+  --status-client-signed-foreground: oklch(72% 0.19 254);
+  --status-counter-signed: oklch(44% 0.22 289 / 20%); /* indigo tint - Counter signed */
+  --status-counter-signed-foreground: oklch(70% 0.18 289);
   
   /* XMA Design System - Interactive States */
   --interactive-primary-hover: oklch(0.627 0.265 27.325); /* Darker red hover */

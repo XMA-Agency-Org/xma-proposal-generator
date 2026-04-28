@@ -20,7 +20,7 @@ export async function POST(
   }
 
   const authClient = await createClient();
-  const { data: proposal } = await (authClient as any)
+  const { data: proposal } = await authClient
     .from("animated_proposals")
     .select("id, status, created_by, provider_signed_at")
     .eq("id", id)
@@ -54,7 +54,7 @@ export async function POST(
   const { data: urlData } = serviceClient.storage.from("signatures").getPublicUrl(storagePath);
   const signedAt = new Date().toISOString();
 
-  const { data, error: updateError } = await (serviceClient as any)
+  const { data, error: updateError } = await serviceClient
     .from("animated_proposals")
     .update({
       provider_signature_url: urlData.publicUrl,
@@ -69,7 +69,7 @@ export async function POST(
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
-  await (serviceClient as any).from("animated_proposal_events").insert({
+  await serviceClient.from("animated_proposal_events").insert({
     proposal_id: id,
     event_type: "sign_submit",
     meta: { role: "provider", user_id: user!.id },

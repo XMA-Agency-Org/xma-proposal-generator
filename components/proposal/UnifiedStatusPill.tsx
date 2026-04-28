@@ -1,7 +1,4 @@
 const ANIMATED_LABELS: Record<string, string> = {
-  draft: "Draft",
-  pending_approval: "Pending Approval",
-  approved: "Approved",
   sent: "Sent",
   client_signed: "Client Signed",
   counter_signed: "Counter Signed",
@@ -19,7 +16,7 @@ const CLASSIC_LABELS: Record<string, string> = {
   archived: "Archived",
 };
 
-const STATUS_CLASSES: Record<string, string> = {
+export const STATUS_CLASSES: Record<string, string> = {
   draft: "bg-status-draft text-status-draft-foreground",
   sent: "bg-status-sent text-status-sent-foreground",
   accepted: "bg-status-accepted text-status-accepted-foreground",
@@ -27,10 +24,8 @@ const STATUS_CLASSES: Record<string, string> = {
   rejected: "bg-status-rejected text-status-rejected-foreground",
   expired: "bg-status-expired text-status-expired-foreground",
   archived: "bg-status-expired text-status-expired-foreground",
-  pending_approval: "bg-yellow-500/20 text-yellow-400",
-  approved: "bg-emerald-500/20 text-emerald-400",
-  client_signed: "bg-blue-500/20 text-blue-400",
-  counter_signed: "bg-indigo-500/20 text-indigo-400",
+  client_signed: "bg-status-client-signed text-status-client-signed-foreground",
+  counter_signed: "bg-status-counter-signed text-status-counter-signed-foreground",
 };
 
 interface Props {

@@ -1,7 +1,4 @@
 export type AnimatedProposalStatus =
-  | "draft"
-  | "pending_approval"
-  | "approved"
   | "sent"
   | "client_signed"
   | "counter_signed"

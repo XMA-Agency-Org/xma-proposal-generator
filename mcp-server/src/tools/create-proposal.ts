@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { supabase, BASE_URL, DEFAULT_AUTHOR_ID } from "../supabase.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { createAnimatedProposalSchema } from "../../../lib/animated-proposal-schema.js";
+
+const payloadSchema = createAnimatedProposalSchema.extend({
+  created_by: createAnimatedProposalSchema.shape.created_by.optional(),
+});
 
 const KNOWN_ICON_KEYS = new Set([
   "time_loss", "money_bleed", "inefficiency", "manual_ops", "low_conversion",
@@ -9,66 +14,6 @@ const KNOWN_ICON_KEYS = new Set([
 ]);
 
 const PRICE_TOLERANCE = 0.15;
-
-const proposalCardSchema = z.object({
-  title: z.string().min(1),
-  desc: z.string().min(1),
-  icon_key: z.string().optional(),
-});
-
-const scopeItemSchema = z.object({
-  title: z.string().min(1),
-  desc: z.string().min(1),
-  icon_key: z.string().optional(),
-});
-
-const timelineNodeSchema = z.object({
-  label: z.string().min(1),
-  days: z.number().int().positive(),
-  desc: z.string().min(1),
-});
-
-const termsClauseSchema = z.object({
-  clause_no: z.string().min(1),
-  title: z.string().min(1),
-  body: z.string().min(1),
-});
-
-const payloadSchema = z.object({
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
-  brand: z.enum(["xma", "xma_media"]).default("xma_media"),
-  client_first_name: z.string().min(1),
-  client_full_name: z.string().min(1),
-  company_name: z.string().min(1),
-  project_title: z.string().min(1),
-  provider_name: z.string().min(1),
-  agency_name: z.string().default("XMA Media"),
-  proposal_date: z.string().optional(),
-  intro_paragraph: z.string().min(1),
-  challenge_intro: z.string().min(1),
-  problems: z.array(proposalCardSchema).length(3),
-  solution_intro: z.string().min(1),
-  solutions: z.array(proposalCardSchema).length(3),
-  scope_phase_name: z.string().optional().nullable(),
-  scope_subtitle: z.string().optional().nullable(),
-  scope_items: z.array(scopeItemSchema).min(1),
-  timeline_nodes: z.array(timelineNodeSchema).min(1),
-  retainer_bullets: z.array(z.string()).default([]),
-  total_price_cents: z.number().int().positive(),
-  milestone_cents: z.number().int().positive().optional().nullable(),
-  retainer_price_cents: z.number().int().positive().optional().nullable(),
-  currency: z.string().length(3).default("AED"),
-  total_days: z.number().int().positive().optional().nullable(),
-  guarantee_text: z.string().optional().nullable(),
-  phase_two_teaser: z.string().optional().nullable(),
-  terms: z.array(termsClauseSchema).default([]),
-  stripe_link: z.string().url().optional().nullable(),
-  expires_at: z.string().datetime().optional().nullable(),
-  package_id: z.string().uuid().optional().nullable(),
-  tos_template_id: z.string().uuid().optional().nullable(),
-  override_warnings: z.boolean().default(false),
-  created_by: z.string().uuid().optional(),
-});
 
 function runWarnings(
   payload: z.infer<typeof payloadSchema>,
@@ -180,7 +125,7 @@ export function registerCreateProposalTool(server: McpServer) {
         .insert({
           ...insertFields,
           created_by: authorId,
-          status: "approved",
+          status: "sent",
         })
         .select("id, token, slug")
         .single();
@@ -204,7 +149,7 @@ export function registerCreateProposalTool(server: McpServer) {
             token: row.token,
             public_url,
             admin_url,
-            status: "approved",
+            status: "sent",
             warnings,
             note: warnings.length > 0
               ? "Review warnings above. Proposal is live — share public_url with the client."

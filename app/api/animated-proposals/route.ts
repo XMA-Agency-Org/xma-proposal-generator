@@ -22,20 +22,20 @@ export async function POST(request: Request) {
   let tos = null;
 
   if (package_id) {
-    const { data } = await (supabase as any).from("packages").select("price, currency, usd_price, brand").eq("id", package_id).single();
+    const { data } = await supabase.from("packages").select("price, currency, usd_price, brand").eq("id", package_id).single();
     pkg = data;
   }
 
   if (tos_template_id) {
-    const { data } = await (supabase as any).from("tos_templates").select("terms, brand").eq("id", tos_template_id).single();
+    const { data } = await supabase.from("tos_templates").select("terms, brand").eq("id", tos_template_id).single();
     tos = data;
   }
 
   const { warnings } = validateAnimatedProposal(parsed.data, pkg, tos);
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("animated_proposals")
-    .insert({ ...insertData, package_id: package_id ?? null, tos_template_id: tos_template_id ?? null, created_by: user!.id, status: "draft" })
+    .insert({ ...insertData, package_id: package_id ?? null, tos_template_id: tos_template_id ?? null, created_by: user!.id, status: "sent" })
     .select()
     .single();
 
@@ -64,7 +64,7 @@ export async function GET(request: Request) {
 
   const supabase = await createClient();
 
-  let query = (supabase as any)
+  let query = supabase
     .from("animated_proposals")
     .select("id, token, slug, status, brand, client_full_name, company_name, project_title, total_price_cents, currency, created_at, updated_at, archived_at, expires_at, created_by, client_signed_at, provider_signed_at", { count: "exact" })
     .order("created_at", { ascending: false })

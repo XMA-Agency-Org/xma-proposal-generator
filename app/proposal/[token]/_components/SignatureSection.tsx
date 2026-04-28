@@ -24,7 +24,7 @@ export function SignatureSection({ proposalId, clientSignedAt, stripeLink, statu
   const [error, setError] = useState<string | null>(null);
   const [accentColor, sectionRef] = useAccentColor();
 
-  const canSign = ["approved", "sent"].includes(status) && !signed;
+  const canSign = status === "sent" && !signed;
   const showStripe = (status === "counter_signed" || status === "paid") && stripeLink;
 
   async function handleSign() {

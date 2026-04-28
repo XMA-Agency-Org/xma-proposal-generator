@@ -13,7 +13,7 @@ export async function GET(
 
   const supabase = await createClient();
 
-  const { data, error } = await (supabase as any).rpc("get_animated_by_token", {
+  const { data, error } = await supabase.rpc("get_animated_by_token", {
     p_token: token,
   });
 

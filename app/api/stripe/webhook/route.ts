@@ -25,13 +25,13 @@ export async function POST(request: Request) {
 
     if (proposalId) {
       const supabase = createServiceClient();
-      await (supabase as any)
+      await supabase
         .from("animated_proposals")
         .update({ status: "paid", stripe_payment_intent_id: session.payment_intent as string })
         .eq("id", proposalId)
-        .in("status", ["counter_signed", "client_signed", "approved", "sent"]);
+        .in("status", ["counter_signed", "client_signed", "sent"]);
 
-      await (supabase as any).from("animated_proposal_events").insert({
+      await supabase.from("animated_proposal_events").insert({
         proposal_id: proposalId,
         event_type: "stripe_click",
         meta: { checkout_session_id: session.id },

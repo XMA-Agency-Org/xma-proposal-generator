@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { requireAuth } from "@/lib/api-auth";
-import { updateAnimatedProposalSchema } from "@/lib/animated-proposal-schema";
+import { updateAnimatedProposalSchema, ANIMATED_STATUS_TRANSITIONS, type AnimatedStatus } from "@/lib/animated-proposal-schema";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { user, error: authError } = await requireAuth();
+  const { error: authError } = await requireAuth();
   if (authError) return authError;
 
   const { id } = await params;
@@ -20,7 +20,25 @@ export async function PATCH(
 
   const supabase = await createClient();
 
-  const { data, error } = await (supabase as any)
+  if (parsed.data.status) {
+    const { data: current } = await supabase
+      .from("animated_proposals")
+      .select("status")
+      .eq("id", id)
+      .single();
+
+    if (current) {
+      const allowed = ANIMATED_STATUS_TRANSITIONS[current.status as AnimatedStatus] ?? [];
+      if (!allowed.includes(parsed.data.status as AnimatedStatus)) {
+        return NextResponse.json(
+          { error: `Cannot transition from '${current.status}' to '${parsed.data.status}'` },
+          { status: 400 }
+        );
+      }
+    }
+  }
+
+  const { data, error } = await supabase
     .from("animated_proposals")
     .update(parsed.data)
     .eq("id", id)
@@ -37,13 +55,13 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { user, error: authError } = await requireAuth();
+  const { error: authError } = await requireAuth();
   if (authError) return authError;
 
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("animated_proposals")
     .select("*")
     .eq("id", id)

@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/design-card";
 import { Dropdown, DropdownItem, DropdownSeparator } from "@/components/ui/dropdown";
 import { MoreHorizontal, Eye, Edit, Archive, Copy } from "lucide-react";
 import type { AnimatedProposal } from "@/types/animated-proposal";
-import { UnifiedStatusPill } from "./UnifiedStatusPill";
+import { UnifiedStatusPill, STATUS_CLASSES } from "./UnifiedStatusPill";
 import { BrandTag } from "./BrandTag";
 
 const BASE_URL = typeof window !== "undefined" ? window.location.origin : "";
@@ -20,9 +20,6 @@ interface Props {
 }
 
 const ANIMATED_STATUSES = [
-  { value: "draft", label: "Draft" },
-  { value: "pending_approval", label: "Pending Approval" },
-  { value: "approved", label: "Approved" },
   { value: "sent", label: "Sent" },
   { value: "client_signed", label: "Client Signed" },
   { value: "counter_signed", label: "Counter Signed" },
@@ -30,25 +27,11 @@ const ANIMATED_STATUSES = [
   { value: "archived", label: "Archived" },
 ];
 
-const STATUS_CLASSES: Record<string, string> = {
-  draft: "bg-status-draft text-status-draft-foreground",
-  sent: "bg-status-sent text-status-sent-foreground",
-  paid: "bg-status-paid text-status-paid-foreground",
-  pending_approval: "bg-yellow-500/20 text-yellow-400",
-  approved: "bg-emerald-500/20 text-emerald-400",
-  client_signed: "bg-blue-500/20 text-blue-400",
-  counter_signed: "bg-indigo-500/20 text-indigo-400",
-  archived: "bg-status-expired text-status-expired-foreground",
-};
-
 const STATUS_BORDER: Record<string, string> = {
-  draft: "border-l-status-draft",
   sent: "border-l-status-sent",
+  client_signed: "border-l-status-client-signed",
+  counter_signed: "border-l-status-counter-signed",
   paid: "border-l-status-paid",
-  pending_approval: "border-l-yellow-500",
-  approved: "border-l-emerald-500",
-  client_signed: "border-l-blue-500",
-  counter_signed: "border-l-indigo-500",
   archived: "border-l-status-expired",
 };
 
@@ -116,7 +99,7 @@ export function AnimatedProposalCard({ proposal, onRemove, userRole }: Props) {
                   {proposal.company_name}
                 </h2>
               </Link>
-              {["approved", "sent", "client_signed", "counter_signed", "paid"].includes(localStatus) && (
+              {["sent", "client_signed", "counter_signed", "paid"].includes(localStatus) && (
                 <button onClick={copyLink} className="text-text-muted hover:text-text-primary transition-colors">
                   <Copy size={14} />
                 </button>

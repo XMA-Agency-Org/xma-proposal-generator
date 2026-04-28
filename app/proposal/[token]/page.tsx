@@ -11,7 +11,7 @@ interface Props {
 
 async function fetchPublic(token: string): Promise<AnimatedProposal | null> {
   const supabase = await createClient();
-  const { data, error } = await (supabase as any).rpc("get_animated_by_token", { p_token: token });
+  const { data, error } = await supabase.rpc("get_animated_by_token", { p_token: token });
   if (error) return null;
   const proposal = Array.isArray(data) ? data[0] : data;
   return proposal ?? null;
@@ -21,7 +21,7 @@ async function fetchPreview(token: string): Promise<AnimatedProposal | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("animated_proposals")
     .select("*")
     .eq("token", token)

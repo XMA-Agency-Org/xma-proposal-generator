@@ -41,3 +41,15 @@ yarn-error.log*
 next-env.d.ts
 backups/
 .claude/.session.json
+
+# MCP server build artifacts
+mcp-server/dist/
+mcp-server/*.mcpb
+mcp-server/manifest.json
+
+# Local test/export files
+proposal-test.json
+transcript.md
+generated-invoices/
+invoices-export.csv
+*.pdf
