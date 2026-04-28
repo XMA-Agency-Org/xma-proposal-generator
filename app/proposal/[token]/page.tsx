@@ -10,10 +10,11 @@ interface Props {
 }
 
 async function fetchPublic(token: string): Promise<AnimatedProposal | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const res = await fetch(`${baseUrl}/api/animated-proposals/public/${token}`, { cache: "no-store" });
-  if (!res.ok) return null;
-  return res.json();
+  const supabase = await createClient();
+  const { data, error } = await (supabase as any).rpc("get_animated_by_token", { p_token: token });
+  if (error) return null;
+  const proposal = Array.isArray(data) ? data[0] : data;
+  return proposal ?? null;
 }
 
 async function fetchPreview(token: string): Promise<AnimatedProposal | null> {
