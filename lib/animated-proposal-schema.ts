@@ -72,7 +72,10 @@ export const createAnimatedProposalSchema = z.object({
 
 export const updateAnimatedProposalSchema = createAnimatedProposalSchema
   .omit({ slug: true, created_by: true })
-  .partial();
+  .partial()
+  .extend({
+    status: z.enum(["draft", "pending_approval", "approved", "sent", "client_signed", "counter_signed", "paid", "archived"]).optional(),
+  });
 
 export const signClientSchema = z.object({
   signature_png_base64: z.string().min(100),

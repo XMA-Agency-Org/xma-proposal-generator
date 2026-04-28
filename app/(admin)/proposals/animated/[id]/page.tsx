@@ -29,6 +29,7 @@ export default function AnimatedProposalDetailPage() {
   const [archiving, setArchiving] = useState(false);
   const [counterSigning, setCounterSigning] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [statusChanging, setStatusChanging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const sigRef = useRef<SignatureCanvas>(null);
 
@@ -49,6 +50,19 @@ export default function AnimatedProposalDetailPage() {
   }
 
   useEffect(() => { load(); }, [id]);
+
+  async function handleStatusChange(newStatus: string) {
+    setStatusChanging(true);
+    setError(null);
+    try {
+      const { data } = await axios.patch(`/api/animated-proposals/${id}`, { status: newStatus });
+      setProposal(data);
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? "Status update failed");
+    } finally {
+      setStatusChanging(false);
+    }
+  }
 
   async function handleArchive() {
     if (!confirm("Archive this proposal? It will be hidden from active lists.")) return;
@@ -136,7 +150,21 @@ export default function AnimatedProposalDetailPage() {
               </div>
               <p className="text-text-muted text-sm">{proposal.client_full_name} · {proposal.company_name}</p>
             </div>
-            <UnifiedStatusPill kind="animated" status={proposal.status} />
+            <div className="flex items-center gap-3">
+              <UnifiedStatusPill kind="animated" status={proposal.status} />
+              {isAdmin && (
+                <select
+                  value={proposal.status}
+                  disabled={statusChanging}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className="text-xs rounded-md border border-border-primary bg-surface-elevated text-text-primary px-2 py-1 disabled:opacity-50 cursor-pointer"
+                >
+                  {["draft","pending_approval","approved","sent","client_signed","counter_signed","paid","archived"].map((s) => (
+                    <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
         </div>
 
