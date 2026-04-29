@@ -4,10 +4,12 @@ import { registerPackageTools } from "./packages";
 import { registerTosTools } from "./tos";
 import { registerSnippetTools } from "./snippets";
 import { registerCreateProposalTool } from "./create-proposal";
+import { registerProposalTools } from "./proposals";
 
 export function registerAllTools(server: McpServer, ctx: McpAuthContext) {
   registerPackageTools(server);
   registerTosTools(server);
   registerSnippetTools(server);
   registerCreateProposalTool(server, ctx);
+  registerProposalTools(server, ctx);
 }
