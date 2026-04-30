@@ -1,3 +1,8 @@
+---
+name: animated-proposal-xma
+description: Creates a personalized animated proposal website for XMA or XMA Media prospects via the xma-proposals MCP server. Use this skill whenever a sales rep wants to generate, create, build, or draft a proposal, animated proposal, or client proposal — even if they don't say "animated". Runs a section-by-section interview (identity, problems, solutions, scope, timeline, commercials, guarantee, T&C) before calling any MCP tools, then submits with one tool call and returns a live URL.
+---
+
 # Animated Proposal — XMA / XMA Media
 
 Create a highly personalized animated proposal website for an XMA or XMA Media prospect. Proposals live at `https://xma-proposal-generator.vercel.app/proposal/<token>` immediately after creation.
