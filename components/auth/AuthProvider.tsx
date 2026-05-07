@@ -83,6 +83,12 @@ export function AuthProvider({
     fetchUserProfile();
   }, [user, supabase]);
 
+  useEffect(() => {
+    if (user?.email) {
+      posthog.identify(user.email, { email: user.email });
+    }
+  }, [user]);
+
   // Set up auth state listener
   useEffect(() => {
     const {
