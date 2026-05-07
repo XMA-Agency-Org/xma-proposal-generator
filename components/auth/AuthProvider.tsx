@@ -85,7 +85,7 @@ export function AuthProvider({
 
   useEffect(() => {
     if (user?.email) {
-      posthog.identify(user.email, { email: user.email });
+      posthog.identify(user.email, { email: user.email, is_internal_user: true });
     }
   }, [user]);
 
@@ -127,7 +127,7 @@ export function AuthProvider({
       });
 
       if (!error) {
-        posthog.identify(email, { email });
+        posthog.identify(email, { email, is_internal_user: true });
         posthog.capture("user_logged_in", { email });
         router.refresh();
       }
