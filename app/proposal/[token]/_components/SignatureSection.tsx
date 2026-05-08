@@ -26,7 +26,7 @@ export function SignatureSection({ proposalId, clientSignedAt, stripeLink, statu
   const [accentColor, sectionRef] = useAccentColor();
 
   const canSign = status === "sent" && !signed;
-  const showStripe = (status === "counter_signed" || status === "paid") && stripeLink;
+  const showStripe = signed && !!stripeLink;
 
   async function handleSign() {
     if (!sigRef.current || sigRef.current.isEmpty()) {
@@ -64,7 +64,7 @@ export function SignatureSection({ proposalId, clientSignedAt, stripeLink, statu
               Proposal Signed
             </h2>
             <p className="opacity-55 mb-10 text-base">
-              Your signature has been received. We&apos;ll counter-sign and send you a confirmation.
+              Your signature has been received. We&apos;ll be in touch shortly.
             </p>
             {showStripe && (
               <a
