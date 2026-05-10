@@ -70,6 +70,18 @@ export function InvestmentSection({
           <div className="mt-5 text-sm opacity-55 whitespace-pre-line max-w-xl">
             {paymentOptionsText}
           </div>
+        ) : !retainerPriceCents && retainerBullets.length > 0 ? (
+          <ul className="mt-5 space-y-2 text-sm opacity-65 max-w-xl">
+            {retainerBullets.map((b, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span
+                  className="mt-2 w-1 h-1 rounded-full shrink-0"
+                  style={{ background: "var(--accent)" }}
+                />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
         ) : milestoneCents ? (
           <p className="mt-5 text-sm opacity-45">
             First milestone:{" "}
