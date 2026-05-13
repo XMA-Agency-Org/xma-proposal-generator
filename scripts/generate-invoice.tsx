@@ -2,6 +2,8 @@ import React from "react";
 import { Document, Page, Text, View, StyleSheet, Image, renderToFile } from "@react-pdf/renderer";
 import path from "path";
 
+const RED = "#E53E3E";
+
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
@@ -15,7 +17,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 24,
+    marginBottom: 8,
+  },
+  headerDivider: {
+    borderBottomWidth: 2,
+    borderBottomColor: RED,
+    borderBottomStyle: "solid",
+    marginBottom: 18,
   },
   logoBox: { width: 220 },
   logoImg: { width: 180, height: 60, objectFit: "contain" },
@@ -23,7 +31,7 @@ const styles = StyleSheet.create({
   fromLine: { fontSize: 9, color: "#333333", marginBottom: 2 },
   fromCompany: { fontSize: 11, fontWeight: "bold", marginBottom: 4 },
   titleBlock: { alignItems: "flex-end" },
-  invoiceTitle: { fontSize: 28, fontWeight: "bold", letterSpacing: 1, color: "#1A1A1A" },
+  invoiceTitle: { fontSize: 28, fontWeight: "bold", letterSpacing: 1, color: RED },
   invoiceNumber: { fontSize: 10, marginTop: 4, color: "#1A1A1A" },
   balanceLabel: { fontSize: 9, marginTop: 18, color: "#555555" },
   balanceDue: { fontSize: 14, fontWeight: "bold", color: "#1A1A1A" },
@@ -55,7 +63,7 @@ const styles = StyleSheet.create({
   table: { marginTop: 8 },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#3A3A3A",
+    backgroundColor: RED,
     color: "#FFFFFF",
     paddingVertical: 8,
     paddingHorizontal: 8,
@@ -99,7 +107,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 8,
     paddingHorizontal: 8,
-    backgroundColor: "#F0F0F0",
+    backgroundColor: "#FBE9E9",
   },
   totalLabelBold: { fontSize: 10, fontWeight: "bold", color: "#1A1A1A" },
   totalValueBold: { fontSize: 10, fontWeight: "bold", color: "#1A1A1A" },
@@ -108,9 +116,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 8,
     paddingHorizontal: 8,
-    backgroundColor: "#E8E8E8",
+    backgroundColor: RED,
     marginTop: 1,
   },
+  balanceLabelWhite: { fontSize: 10, fontWeight: "bold", color: "#FFFFFF" },
+  balanceValueWhite: { fontSize: 10, fontWeight: "bold", color: "#FFFFFF" },
 
   taxSection: { marginTop: 28 },
   taxTitle: { fontSize: 10, fontWeight: "bold", marginBottom: 8, color: "#1A1A1A" },
@@ -154,7 +164,7 @@ function Invoice() {
         {/* Header */}
         <View style={styles.headerRow}>
           <View style={styles.logoBox}>
-            <Image style={styles.logoImg} src={path.join(process.cwd(), "public", "XMA-01.png")} />
+            <Image style={styles.logoImg} src={path.join(process.cwd(), "public", "XMA-Red.png")} />
           </View>
           <View style={styles.titleBlock}>
             <Text style={styles.invoiceTitle}>TAX INVOICE</Text>
@@ -163,6 +173,7 @@ function Invoice() {
             <Text style={styles.balanceDue}>USD 3,000.00</Text>
           </View>
         </View>
+        <View style={styles.headerDivider} />
 
         {/* From + meta + bill to */}
         <View style={styles.twoCol}>
@@ -252,13 +263,13 @@ function Invoice() {
             <Text style={styles.totalValueBold}>USD 3,000.00</Text>
           </View>
           <View style={styles.balanceRow}>
-            <Text style={styles.totalLabelBold}>Balance Due</Text>
-            <Text style={styles.totalValueBold}>USD 3,000.00</Text>
+            <Text style={styles.balanceLabelWhite}>Balance Due</Text>
+            <Text style={styles.balanceValueWhite}>USD 3,000.00</Text>
           </View>
         </View>
 
         {/* Tax Summary */}
-        <View style={styles.taxSection}>
+        <View style={styles.taxSection} wrap={false}>
           <Text style={styles.taxTitle}>Tax Summary</Text>
           <Text style={styles.taxNote}>
             Out of scope: cross-border B2B export of services from UAE to KSA — not subject to UAE VAT.
