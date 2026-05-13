@@ -27,6 +27,17 @@ const styles = StyleSheet.create({
   },
   logoBox: { width: 220 },
   logoImg: { width: 180, height: 60, objectFit: "contain" },
+  wordmarkRow: { flexDirection: "row", alignItems: "center" },
+  wordmarkX: { fontSize: 44, fontWeight: "bold", color: RED, letterSpacing: 1 },
+  wordmarkMA: { fontSize: 44, fontWeight: "bold", color: "#111111", letterSpacing: 1 },
+  wordmarkAgency: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#111111",
+    letterSpacing: 6,
+    marginLeft: 2,
+    marginTop: -4,
+  },
   fromBlock: { marginTop: 12 },
   fromLine: { fontSize: 9, color: "#333333", marginBottom: 2 },
   fromCompany: { fontSize: 11, fontWeight: "bold", marginBottom: 4 },
@@ -164,7 +175,11 @@ function Invoice() {
         {/* Header */}
         <View style={styles.headerRow}>
           <View style={styles.logoBox}>
-            <Image style={styles.logoImg} src={path.join(process.cwd(), "public", "XMA-Red.png")} />
+            <View style={styles.wordmarkRow}>
+              <Text style={styles.wordmarkX}>X</Text>
+              <Text style={styles.wordmarkMA}>MA</Text>
+            </View>
+            <Text style={styles.wordmarkAgency}>AGENCY</Text>
           </View>
           <View style={styles.titleBlock}>
             <Text style={styles.invoiceTitle}>TAX INVOICE</Text>
@@ -314,7 +329,7 @@ function Invoice() {
         <View style={styles.page2Section}>
           <Text style={styles.page2Header}>PAYMENT INFORMATION</Text>
           <Text style={styles.page2Line}>Account Holder: XLUXIVE DIGITAL MARKETING LLC</Text>
-          <Text style={styles.page2Line}>IBAN: AE590860000009339072484</Text>
+          <Text style={styles.page2Line}>IBAN: AE690860000009167398697</Text>
           <Text style={styles.page2Line}>SWIFT/BIC: WIOBAEADXXX</Text>
           <Text style={styles.page2Line}>Bank Address: Office M-44, The Curve Building, Al Quoz, Al Qouz Third, Dubai, UAE</Text>
         </View>
