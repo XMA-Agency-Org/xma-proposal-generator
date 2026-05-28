@@ -25,7 +25,6 @@ async function fetchPreview(token: string): Promise<AnimatedProposal | null> {
     .from("animated_proposals")
     .select("*")
     .eq("token", token)
-    .is("archived_at", null)
     .single();
   if (error || !data) return null;
   return data;
