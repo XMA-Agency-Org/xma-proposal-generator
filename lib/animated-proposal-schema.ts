@@ -88,7 +88,7 @@ export const ANIMATED_STATUS_TRANSITIONS: Record<AnimatedStatus, AnimatedStatus[
   client_signed: ["counter_signed", "paid", "archived"],
   counter_signed: ["paid", "archived"],
   paid: ["archived"],
-  archived: [],
+  archived: ["sent", "client_signed", "counter_signed", "paid"],
 };
 
 export const updateAnimatedProposalSchema = createAnimatedProposalSchema
