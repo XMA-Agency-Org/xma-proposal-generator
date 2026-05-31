@@ -166,6 +166,16 @@ export default function ReportsClient({ initialProposals }: ReportsClientProps) 
     let totalBeforeDiscount = 0;
 
     filteredProposals.forEach((proposal) => {
+      // Animated proposals store a flat price in cents and carry no discount data.
+      if (proposal.isAnimated) {
+        if (proposal.status?.toLowerCase() === 'paid') {
+          const animatedRevenue = (proposal.total_price_cents || 0) / 100;
+          totalBeforeDiscount += animatedRevenue;
+          totalRevenue += animatedRevenue;
+        }
+        return;
+      }
+
       // Only count revenue for paid proposals
       if (proposal.proposal_data && proposal.status?.toLowerCase() === 'paid') {
         const data = proposal.proposal_data;
