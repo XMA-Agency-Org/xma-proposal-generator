@@ -73,7 +73,6 @@ export const createAnimatedProposalSchema = z.object({
   terms: z.array(termsClauseSchema).default([]),
 
   stripe_link: z.string().url().optional().nullable(),
-  expires_at: z.string().datetime().optional().nullable(),
 
   package_id: z.string().uuid().optional().nullable(),
   tos_template_id: z.string().uuid().optional().nullable(),
